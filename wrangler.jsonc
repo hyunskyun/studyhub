@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "studyhub",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-11-18",
+  "upload_source_maps": true,
+  "assets": {
+    // 클라이언트 라우팅(해시 라우터)용 SPA 폴백, /api/* 는 Worker가 먼저 처리
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "studyhub",
+      "database_id": "130994bc-3cec-41b0-8ce8-edbd6463d542",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "secrets": {
+    // 개인 접근 키. 로컬은 .dev.vars, 배포 시에는 `wrangler secret put ACCESS_KEY`
+    "required": ["ACCESS_KEY"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

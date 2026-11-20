@@ -28,7 +28,7 @@ export function DayTimeline({
   day,
   blocks,
   events,
-  onBlocksChange,
+  onMoveBlock,
   onOpenBlock,
   onOpenEvent,
   nowMs,
@@ -36,7 +36,7 @@ export function DayTimeline({
   day: DateStr
   blocks: TimeBlock[]
   events: AgendaItem[]
-  onBlocksChange: (b: TimeBlock[]) => void
+  onMoveBlock: (b: TimeBlock) => Promise<unknown>
   onOpenBlock: (b: TimeBlock) => void
   onOpenEvent: (e: AgendaItem) => void
   nowMs: number
@@ -77,15 +77,16 @@ export function DayTimeline({
     setDraft({ id: d.id, start: new Date(s).toISOString(), end: new Date(en).toISOString() })
   }
 
-  function endDrag() {
+  async function endDrag() {
     const d = drag.current
     drag.current = null
     if (!d || !draft) return setDraft(null)
-    const next = blocks.map((b) => (b.id === draft.id ? { ...b, start: draft.start, end: draft.end } : b))
-    const moved = next.find((b) => b.id === draft.id)!
-    const clash = next.some((b) => b.id !== moved.id && overlaps(b.start, b.end, moved.start, moved.end))
-    // 학습 계획끼리 겹치면 저장 차단 (Q69): 원래 위치로 되돌린다
-    if (!clash) onBlocksChange(next)
+    const orig = blocks.find((b) => b.id === draft.id)
+    if (!orig || (orig.start === draft.start && orig.end === draft.end)) return setDraft(null)
+    const moved = { ...orig, start: draft.start, end: draft.end }
+    const clash = blocks.some((b) => b.id !== moved.id && overlaps(b.start, b.end, moved.start, moved.end))
+    // 학습 계획끼리 겹치면 저장 차단 (Q69): 원래 위치로 되돌린다. 저장 중에는 옮긴 위치를 유지
+    if (!clash) await onMoveBlock(moved)
     setDraft(null)
   }
 

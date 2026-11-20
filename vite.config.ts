@@ -1,3 +1,4 @@
+import { cloudflare } from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -7,6 +8,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
+    // Worker(/api/*, D1)를 Vite 개발 서버 안에서 workerd로 실행
+    cloudflare({ viteEnvironment: { name: 'worker' } }),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -20,8 +23,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#f6f6f7',
-        theme_color: '#f6f6f7',
+        background_color: '#eef1f5',
+        theme_color: '#eef1f5',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
@@ -36,6 +39,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
+        // API 요청은 서비스 워커가 가로채거나 캐시하지 않는다
+        navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
       },
     }),

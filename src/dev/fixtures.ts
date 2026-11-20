@@ -1,7 +1,6 @@
 // 개발 전용 디자인 검수 fixture. 프로덕션 번들에 포함되지 않으며(동적 import + DEV 가드)
 // 실제 사용자 데이터로 저장되지 않는다 (Q155).
 import { DEFAULT_ERROR_CAUSES } from '../data/empty'
-import type { AppRepository } from '../data/repository'
 import { addDays, kstDateTime as at, mondayOf, studyDayOf, weekdayOf } from '../domain/time'
 import type { AppData, Part, WorkbookUnit } from '../domain/types'
 
@@ -85,7 +84,7 @@ export function createFixtureData(now: number): AppData {
     ],
     activeTimer: {
       subjectId: 'math-calc', tags: ['suneung'], activity: { kind: 'workbook', id: 'wb1' }, planBlockId: 'b1',
-      segmentStart: new Date(now - 42 * 60_000).toISOString(), ownedHere: true,
+      segmentStart: new Date(now - 42 * 60_000).toISOString(),
     },
     timerConflicts: [
       { id: 'c1', subjectId: 'eng', tags: ['suneung'], start: at(today, '13:30'), end: at(today, '14:20'), breaks: [], source: 'timer' },
@@ -155,6 +154,7 @@ export function createFixtureData(now: number): AppData {
     ],
     timetable: [1, 2, 3, 4, 5].flatMap((wd) =>
       Array.from({ length: 7 }, (_, i) => ({
+        id: `${wd}-${i + 1}`,
         weekday: wd,
         period: i + 1,
         subject: ['국어', '수학', '영어', '물리학Ⅰ', '한국사', '체육', '미적분Ⅰ', '문학', '진로'][(i + wd * 2) % 9],
@@ -168,17 +168,13 @@ export function createFixtureData(now: number): AppData {
       { id: 'f3', name: '영어 단어장 Day 1–30.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', path: '공유 문서함', status: 'inaccessible', links: [{ kind: 'todo', id: 't3' }] },
     ],
     trash: [
-      { id: 'tr1', kind: 'todo', title: '화학 실험 준비물 챙기기', deletedAt: new Date(now - 3 * 86_400_000).toISOString() },
-      { id: 'tr2', kind: 'project', title: '사회 모둠 발표', deletedAt: new Date(now - 26 * 86_400_000).toISOString(), relatedCount: 3 },
-      { id: 'tr3', kind: 'block', title: '수학 계획 19:00–20:00', deletedAt: new Date(now - 1 * 86_400_000).toISOString() },
+      { id: 'tr1', collection: 'todos', kind: 'todo', title: '화학 실험 준비물 챙기기', deletedAt: new Date(now - 3 * 86_400_000).toISOString() },
+      { id: 'tr2', collection: 'projects', kind: 'project', title: '사회 모둠 발표', deletedAt: new Date(now - 26 * 86_400_000).toISOString(), relatedCount: 3 },
+      { id: 'tr3', collection: 'blocks', kind: 'block', title: '수학 계획 19:00–20:00', deletedAt: new Date(now - 1 * 86_400_000).toISOString() },
     ],
     archive: [
       { id: 'ar1', kind: 'workbook', title: '쎈 수학Ⅱ', label: '2026년 1학기' },
       { id: 'ar2', kind: 'schoolExam', title: '수학Ⅱ 기말고사', label: '2026년 1학기' },
     ],
   }
-}
-
-export function createFixtureRepository(now: number): AppRepository {
-  return { kind: 'fixture', load: async () => createFixtureData(now) }
 }

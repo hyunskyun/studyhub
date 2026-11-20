@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Play, Trash2 } from 'lucide-react'
+import { useAppData } from '../../app/data-context'
+import { navigate } from '../../app/router'
+import { useRun } from '../../app/useRun'
 import { Button } from '../../components/ui/Button'
 import { Field, TextInput } from '../../components/ui/Form'
 import { Modal } from '../../components/ui/Modal'
-import { PrototypeNotice } from '../../components/ui/Layout'
 import { formatTime, kstDateOf, kstDateTime, overlaps, type DateStr } from '../../domain/time'
 import type { ExamTag, TimeBlock } from '../../domain/types'
 import { SubjectSelect, TagPicker } from '../shared/inputs'
@@ -28,7 +30,6 @@ export function BlockEditor({
   day,
   others,
   onClose,
-  onSave,
   onDelete,
 }: {
   open: boolean
@@ -36,11 +37,12 @@ export function BlockEditor({
   day: DateStr
   others: TimeBlock[]
   onClose: () => void
-  onSave: (b: TimeBlock) => void
   onDelete: (b: TimeBlock) => void
 }) {
   const [d, setD] = useState<Draft>(() => toDraft(block, day))
   const [touched, setTouched] = useState(false)
+  const { actions, data } = useAppData()
+  const { run, pending, error } = useRun()
 
   const startIso = kstDateTime(d.date, d.start)
   // 종료가 시작보다 이르면 다음 날로 해석 (자정 넘김)
@@ -54,10 +56,21 @@ export function BlockEditor({
   }
   const valid = !errors.subject && !errors.time
 
-  const submit = () => {
+  const submit = async () => {
     setTouched(true)
     if (!valid) return
-    onSave({ id: block?.id ?? `local-${Date.now()}`, subjectId: d.subjectId, tags: d.tags, start: startIso, end: endIso, activity: block?.activity })
+    const ok = await run(() => actions.saveBlock({ id: block?.id, subjectId: d.subjectId, tags: d.tags, start: startIso, end: endIso, activity: block?.activity }))
+    if (ok) onClose()
+  }
+
+  /** 계획에서 공부 시작: 과목·태그·활동을 타이머에 적용하고 기록을 계획에 연결 (Q48) */
+  const startFromPlan = async () => {
+    if (!block) return
+    const ok = await run(() => actions.startTimer({ subjectId: block.subjectId, tags: block.tags, planBlockId: block.id, activity: block.activity }))
+    if (ok) {
+      onClose()
+      navigate('/timer')
+    }
   }
 
   return (
@@ -73,11 +86,11 @@ export function BlockEditor({
             </Button>
           )}
           {block && (
-            <a href="#/timer" className="inline-flex h-9 items-center gap-1.5 rounded-md bg-surface px-3.5 text-sm font-medium shadow-control hover:bg-subtle">
-              <Play className="size-4" /> 공부 시작
-            </a>
+            <Button icon={<Play className="size-4" />} onClick={startFromPlan} disabled={pending || !!data.activeTimer} title={data.activeTimer ? '이미 실행 중인 타이머가 있습니다' : undefined}>
+              공부 시작
+            </Button>
           )}
-          <Button variant="primary" onClick={submit}>
+          <Button variant="primary" onClick={submit} disabled={pending}>
             저장
           </Button>
         </>
@@ -108,7 +121,11 @@ export function BlockEditor({
           </p>
         )}
         <p className="text-xs text-muted">학교·학원 수업과 겹치는 계획은 허용됩니다. 계획을 바꿔도 이미 기록된 실제 공부 시각은 바뀌지 않습니다.</p>
-        <PrototypeNotice>변경 내용은 이 화면에서만 보이며 저장되지 않습니다.</PrototypeNotice>
+        {error && (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   )

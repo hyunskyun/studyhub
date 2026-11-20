@@ -6,7 +6,7 @@ import {
   overlaps,
   splitMinutesByStudyDay,
   type DateStr,
-} from './time'
+} from './time.ts'
 import type {
   AcademyClass,
   AppData,
@@ -16,7 +16,7 @@ import type {
   StudySession,
   Todo,
   Workbook,
-} from './types'
+} from './types.ts'
 
 export const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
 export const PRIORITY_LABEL: Record<Priority, string> = { high: '높음', medium: '보통', low: '낮음' }

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { Button } from '../../components/ui/Button'
 import { Field, Select, TextInput } from '../../components/ui/Form'
-import { PrototypeNotice } from '../../components/ui/Layout'
 import { Modal } from '../../components/ui/Modal'
 import { findSessionConflicts } from '../../domain/logic'
 import { formatDay, formatTime, kstDateOf, minutesBetween, overlaps, studyDayOf } from '../../domain/time'
@@ -15,7 +15,8 @@ const fromLocal = (v: string) => (v ? `${v}:00+09:00` : '')
 
 /** 수동 기록: 시작·종료 일시 모두 필수 (Q74), 확정 기록과 겹치면 저장 불가 (Q84) */
 export function ManualSessionModal({ sessions, onClose }: { sessions: StudySession[]; onClose: () => void }) {
-  const { data, subjectName } = useAppData()
+  const { data, subjectName, actions } = useAppData()
+  const { run, pending, error } = useRun()
   const [subjectId, setSubjectId] = useState('')
   const [tags, setTags] = useState<ExamTag[]>([])
   const [start, setStart] = useState('')
@@ -32,6 +33,13 @@ export function ManualSessionModal({ sessions, onClose }: { sessions: StudySessi
     end: !end ? '종료 일시를 입력하세요.' : s && e && Date.parse(e) <= Date.parse(s) ? '종료는 시작 이후여야 합니다.' : undefined,
   }
 
+  const submit = async () => {
+    setTouched(true)
+    if (errors.subject || errors.start || errors.end || conflicts.length) return
+    const ok = await run(() => actions.addManualSession({ subjectId, tags, start: s, end: e, planBlockId: blockId || undefined }))
+    if (ok) onClose()
+  }
+
   return (
     <Modal
       open
@@ -40,7 +48,7 @@ export function ManualSessionModal({ sessions, onClose }: { sessions: StudySessi
       footer={
         <>
           <Button onClick={onClose}>취소</Button>
-          <Button variant="primary" onClick={() => setTouched(true)} disabled={conflicts.length > 0}>
+          <Button variant="primary" onClick={submit} disabled={conflicts.length > 0 || pending}>
             저장
           </Button>
         </>
@@ -90,7 +98,11 @@ export function ManualSessionModal({ sessions, onClose }: { sessions: StudySessi
             </Select>
           )}
         </Field>
-        <PrototypeNotice />
+        {error && (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   )
@@ -98,7 +110,8 @@ export function ManualSessionModal({ sessions, onClose }: { sessions: StudySessi
 
 /** 충돌 편집: 어느 기록을 수정할지 선택하고 겹침이 해소되어야 확정 (Q82, Q138) */
 export function ConflictResolver({ candidate, sessions, onClose }: { candidate: StudySession; sessions: StudySession[]; onClose: () => void }) {
-  const { subjectName } = useAppData()
+  const { subjectName, actions } = useAppData()
+  const { run, pending, error } = useRun()
   const others = findSessionConflicts(sessions, candidate)
   const [target, setTarget] = useState<string>(candidate.id)
   const initial = Object.fromEntries([candidate, ...others].map((x) => [x.id, { start: toLocal(x.start), end: toLocal(x.end) }]))
@@ -115,25 +128,39 @@ export function ConflictResolver({ candidate, sessions, onClose }: { candidate: 
       size="lg"
       footer={
         <>
-          <Button variant="ghost" className="mr-auto text-danger">
+          <Button
+            variant="ghost"
+            className="mr-auto text-danger"
+            disabled={pending}
+            onClick={async () => {
+              if (await run(() => actions.discardConflict(candidate.id))) onClose()
+            }}
+          >
             충돌 후보 버리기
           </Button>
           <Button onClick={onClose}>나중에</Button>
-          <Button variant="primary" disabled={stillOverlaps}>
+          <Button
+            variant="primary"
+            disabled={stillOverlaps || pending}
+            onClick={async () => {
+              const edited = Object.fromEntries(all.map((x) => [x.id, { start: x.start, end: x.end }]))
+              if (await run(() => actions.resolveConflict(candidate.id, edited))) onClose()
+            }}
+          >
             확정
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <p className="text-sm">오프라인에서 기록된 구간이 기존 기록과 겹칩니다. 확정된 공부 기록은 서로 겹칠 수 없으므로 수정할 기록을 고르세요.</p>
+        <p className="text-sm">타이머 구간이 기존 기록과 겹칩니다. 확정된 공부 기록은 서로 겹칠 수 없으므로 수정할 기록을 고르세요.</p>
         <div className="divide-y divide-line border-y border-line" role="radiogroup" aria-label="수정할 기록">
           {all.map((x) => (
             <label key={x.id} className={`block py-3 ${target === x.id ? '' : 'opacity-70'}`}>
               <span className="flex items-center gap-2">
                 <input type="radio" name="target" className="size-5 accent-[var(--accent)]" checked={target === x.id} onChange={() => setTarget(x.id)} />
                 <span className="font-medium">{subjectName(x.subjectId)}</span>
-                <span className="text-xs text-muted">{x.id === candidate.id ? '충돌 후보(다른 기기)' : '확정된 기록'}</span>
+                <span className="text-xs text-muted">{x.id === candidate.id ? '충돌 후보' : '확정된 기록'}</span>
               </span>
               <span className="mt-2 grid gap-2 sm:grid-cols-2">
                 {(['start', 'end'] as const).map((k) => (
@@ -153,7 +180,11 @@ export function ConflictResolver({ candidate, sessions, onClose }: { candidate: 
         <p role="status" className={`rounded-md px-3 py-2 text-sm ${stillOverlaps ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'}`}>
           {stillOverlaps ? '아직 시간이 겹칩니다. 겹침을 없애야 확정할 수 있습니다.' : '겹침이 해소되었습니다.'}
         </p>
-        <PrototypeNotice />
+        {error && (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   )
