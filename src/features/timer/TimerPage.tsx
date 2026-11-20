@@ -49,9 +49,9 @@ export default function TimerPage() {
       />
 
       {data.timerConflicts.length > 0 && (
-        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-4 py-3">
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-warning-soft px-4 py-2.5">
           <AlertTriangle className="size-5 shrink-0 text-warning" />
-          <p className="min-w-0 flex-1 text-[15px]">
+          <p className="min-w-0 flex-1 text-sm">
             확정 전 충돌 후보 <b>{data.timerConflicts.length}건</b>이 있습니다. 해결하기 전까지 통계에 포함되지 않습니다.
           </p>
           <Button size="sm" onClick={() => setConflictId(data.timerConflicts[0].id)}>
@@ -69,7 +69,7 @@ export default function TimerPage() {
                   <Lock className="size-4" /> {timer.ownerDeviceName ?? '다른 기기'}에서 실행 중 · 읽기 전용
                 </p>
               )}
-              <p className="flex items-center gap-2 text-[15px] font-medium">
+              <p className="flex items-center gap-2 text-sm font-medium">
                 <SubjectDot color={subject(timer.subjectId)?.color} />
                 {subjectName(timer.subjectId)}
                 <TagChips tags={timer.tags} />
@@ -84,7 +84,7 @@ export default function TimerPage() {
               )}
               <div className="mt-6 grid w-full max-w-md grid-cols-3 gap-2">
                 <Button
-                  className="h-14"
+                  className="h-10"
                   disabled={!timer.ownedHere}
                   icon={timer.breakStart ? <Play className="size-5" /> : <Coffee className="size-5" />}
                   onClick={() => setTimer({ ...timer, breakStart: timer.breakStart ? undefined : new Date().toISOString() })}
@@ -92,7 +92,7 @@ export default function TimerPage() {
                   {timer.breakStart ? '재개' : '휴식'}
                 </Button>
                 <Button
-                  className="h-14"
+                  className="h-10"
                   disabled={!timer.ownedHere || !!timer.breakStart}
                   icon={<ArrowLeftRight className="size-5" />}
                   onClick={() => {
@@ -103,7 +103,7 @@ export default function TimerPage() {
                 >
                   과목 전환
                 </Button>
-                <Button className="h-14" variant="danger" disabled={!timer.ownedHere} icon={<Square className="size-5" />} onClick={() => setStopOpen(true)}>
+                <Button className="h-10" variant="danger" disabled={!timer.ownedHere} icon={<Square className="size-5" />} onClick={() => setStopOpen(true)}>
                   종료
                 </Button>
               </div>
@@ -125,7 +125,7 @@ export default function TimerPage() {
               </div>
               <Button
                 variant="primary"
-                className="h-14 w-full text-base"
+                className="h-10 w-full"
                 disabled={!startSubject}
                 icon={<Play className="size-5" />}
                 onClick={() => setTimer({ subjectId: startSubject, tags: startTags, segmentStart: new Date().toISOString(), ownedHere: true })}
@@ -161,14 +161,14 @@ export default function TimerPage() {
         </Card>
       </div>
 
-      <h2 className="mt-8 mb-3 text-[15px] font-semibold">오늘 기록</h2>
+      <h2 className="mt-8 mb-3 text-sm font-semibold">오늘 기록</h2>
       <Card padded={false}>
         {todaySessions.length === 0 ? (
           <EmptyState compact icon={<Timer className="size-6" />} title="오늘 공부 기록이 없습니다" description="타이머를 시작하거나 시작·종료 시각을 직접 입력하세요." />
         ) : (
           <ul className="divide-y divide-line">
             {todaySessions.map((s) => (
-              <li key={s.id} className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 md:px-5">
+              <li key={s.id} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 md:px-5">
                 <span className="tabular w-28 text-sm text-muted">
                   {formatTime(s.start)}–{formatTime(s.end)}
                 </span>
@@ -253,7 +253,7 @@ export default function TimerPage() {
           </>
         }
       >
-        <p className="text-[15px]">
+        <p className="text-sm">
           {formatDay(today)} 18:20부터 19:05까지(45분) 앱이 닫혀 있었습니다. 이 시간 동안 공부를 계속했나요? 나중에 기록에서 수정할 수도 있습니다.
         </p>
       </Modal>

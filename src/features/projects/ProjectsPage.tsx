@@ -41,7 +41,7 @@ export default function ProjectsPage() {
           {p.submitted ? <Badge tone="success">제출함</Badge> : <DDayBadge dday={dDay(p.due.date, now)} />}
         </div>
 
-        {p.criteria && <p className="mt-3 rounded-xl bg-subtle px-3 py-2 text-sm text-muted">평가 기준 · {p.criteria}</p>}
+        {p.criteria && <p className="mt-2 text-sm text-muted">평가 기준 · {p.criteria}</p>}
 
         {p.steps.length > 0 && (
           <div className="mt-4">
@@ -54,14 +54,14 @@ export default function ProjectsPage() {
             <ProgressBar value={done} max={p.steps.length} />
             <ul className="mt-2">
               {p.steps.map((s) => (
-                <li key={s.id} className="flex min-h-11 items-center gap-2">
+                <li key={s.id} className="flex min-h-9 items-center gap-2">
                   <CheckButton
                     checked={s.done}
                     label={`${s.title} 완료`}
                     round
                     onChange={(v) => update({ ...p, steps: p.steps.map((x) => (x.id === s.id ? { ...x, done: v } : x)) })}
                   />
-                  <span className={cn('min-w-0 flex-1 text-[15px]', s.done && 'text-muted line-through')}>{s.title}</span>
+                  <span className={cn('min-w-0 flex-1 text-sm', s.done && 'text-muted line-through')}>{s.title}</span>
                   {s.todoId && (
                     <Badge>
                       <Link2 className="size-3" /> 할 일
@@ -78,7 +78,7 @@ export default function ProjectsPage() {
           <Toggle label="제출 완료" description="세부 단계 완료와 별개로 기록" checked={p.submitted} onChange={(v) => update({ ...p, submitted: v })} />
           <div className="flex items-center justify-between gap-2 sm:justify-end">
             <span className="text-sm text-muted">획득 / 총점</span>
-            <span className="tabular text-lg font-semibold">
+            <span className="tabular text-base font-semibold">
               {p.earnedScore ?? '–'} / {p.totalScore ?? '–'}
             </span>
           </div>

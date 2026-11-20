@@ -4,56 +4,61 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ───────── 디자인 토큰 ───────── */
+/* 방향: 차분한 회청색 배경 + 흰 패널 + 얇은 구분선. 영역은 상자보다 구분선으로 나눈다. */
 :root {
   color-scheme: light;
-  --bg: #f6f6f7;
+  --bg: #eef1f5;
   --surface: #ffffff;
-  --subtle: #f0f0f2;
-  --line: #e3e3e7;
-  --fg: #17171a;
-  --muted: #6b6b75;
-  --faint: #9a9aa3;
-  --accent: #3554d1;
+  --subtle: #f6f8fa;
+  --line: #e3e8ee;
+  --fg: #1a1f36;
+  --muted: #697386;
+  --faint: #a3acb9;
+  --accent: #5469d4;
   --accent-fg: #ffffff;
-  --accent-soft: #eaeefc;
-  --success: #1c7c4a;
-  --success-soft: #e3f4ea;
-  --warning: #9a5b00;
-  --warning-soft: #fdf1dc;
-  --danger: #c22f2f;
-  --danger-soft: #fbe7e7;
-  --overlay: rgb(15 15 20 / 0.4);
+  --accent-soft: #eef0fc;
+  --success: #0e6245;
+  --success-soft: #cbf4c9;
+  --warning: #983705;
+  --warning-soft: #f8e5b9;
+  --danger: #c0123c;
+  --danger-soft: #fde2dd;
+  --overlay: rgb(26 31 54 / 0.35);
+  --panel-shadow: 0 0 0 1px rgb(26 31 54 / 0.04), 0 1px 3px rgb(26 31 54 / 0.08);
+  --control-shadow: 0 0 0 1px rgb(26 31 54 / 0.1), 0 1px 1px rgb(26 31 54 / 0.06);
 
   /* 과목 색상 (구분용, 의미 없음) */
-  --sub-0: #3554d1;
-  --sub-1: #c2410c;
-  --sub-2: #0f766e;
-  --sub-3: #7c3aed;
-  --sub-4: #b45309;
-  --sub-5: #be185d;
+  --sub-0: #5469d4;
+  --sub-1: #d45b25;
+  --sub-2: #0b8a7a;
+  --sub-3: #8d5bd4;
+  --sub-4: #b7791f;
+  --sub-5: #c43c7c;
 }
 
 .dark {
   color-scheme: dark;
-  --bg: #0e0f11;
-  --surface: #17181b;
-  --subtle: #202125;
-  --line: #2c2d32;
-  --fg: #f2f2f4;
-  --muted: #a3a3ad;
-  --faint: #73737d;
-  --accent: #8ba2ff;
-  --accent-fg: #0e0f11;
-  --accent-soft: #232a45;
-  --success: #5fd395;
-  --success-soft: #16301f;
-  --warning: #f1b44c;
+  --bg: #0f1218;
+  --surface: #181c24;
+  --subtle: #1d222b;
+  --line: #2a303c;
+  --fg: #e8ebf1;
+  --muted: #9aa3b2;
+  --faint: #6b7383;
+  --accent: #8b9cff;
+  --accent-fg: #0f1218;
+  --accent-soft: #252b48;
+  --success: #6bd59a;
+  --success-soft: #12301f;
+  --warning: #f2b65c;
   --warning-soft: #33270f;
-  --danger: #ff8a8a;
-  --danger-soft: #3a1b1b;
+  --danger: #ff8a9b;
+  --danger-soft: #3a1820;
   --overlay: rgb(0 0 0 / 0.6);
+  --panel-shadow: 0 0 0 1px rgb(255 255 255 / 0.06);
+  --control-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
 
-  --sub-0: #8ba2ff;
+  --sub-0: #8b9cff;
   --sub-1: #fb923c;
   --sub-2: #2dd4bf;
   --sub-3: #b49bff;
@@ -79,10 +84,36 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-overlay: var(--overlay);
+  --shadow-panel: var(--panel-shadow);
+  --shadow-control: var(--control-shadow);
 
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Segoe UI', 'Malgun Gothic',
     system-ui, sans-serif;
+}
+
+/* 글자 크기 체계: 본문 14px 기준 (이전 대비 약 15~35% 축소) */
+@theme {
+  --text-xs: 0.71875rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-lg: 0.9375rem;
+  --text-lg--line-height: 1.375rem;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.5rem;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 1.625rem;
+  --text-3xl--line-height: 2rem;
+  --text-4xl: 2rem;
+  --text-4xl--line-height: 2.25rem;
+  --text-5xl: 2.5rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3rem;
+  --text-6xl--line-height: 1;
 }
 
 /* ───────── 기본 ───────── */
@@ -97,6 +128,8 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.375rem;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;

@@ -93,7 +93,7 @@ export function TodoEditor({ todo, onClose }: { todo: Todo | null; onClose: () =
               ))}
             </ul>
           )}
-          {lateSub && <p className="mt-2 rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">상위 마감일이 하위 항목 「{lateSub.title || '제목 없음'}」의 마감일보다 빠릅니다. 그대로 저장할 수 있습니다.</p>}
+          {lateSub && <p className="mt-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">상위 마감일이 하위 항목 「{lateSub.title || '제목 없음'}」의 마감일보다 빠릅니다. 그대로 저장할 수 있습니다.</p>}
         </div>
         <PrototypeNotice />
       </div>

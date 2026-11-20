@@ -74,7 +74,7 @@ export default function TodosPage() {
             <CheckButton checked={t.done} indeterminate={!t.done && d > 0} onChange={() => toggleParent(t)} label={`${t.title} 완료`} />
           </div>
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setEditor({ todo: t })}>
-            <span className={cn('block text-[15px] leading-snug', t.done && 'text-muted line-through')}>{t.title}</span>
+            <span className={cn('block text-sm leading-snug', t.done && 'text-muted line-through')}>{t.title}</span>
             <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
               {t.subjectId && <SubjectLabel subject={subject(t.subjectId)} />}
               <TagChips tags={t.tags} />
@@ -181,7 +181,7 @@ export default function TodosPage() {
 
       {done.length > 0 && (
         <div className="mt-4">
-          <button type="button" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)} className="flex h-11 items-center gap-1 text-sm font-medium text-muted">
+          <button type="button" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)} className="flex h-9 items-center gap-1 text-sm font-medium text-muted">
             {showDone ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
             완료됨 {done.length}
           </button>
@@ -228,7 +228,7 @@ export default function TodosPage() {
           </>
         }
       >
-        <p className="text-[15px]">
+        <p className="text-sm">
           「{partConfirm?.title}」에 연결된 문제집 Part 중 {partConfirm?.partIds.filter((id) => !isPartDone(id)).length}개가 아직 미완료입니다. 완료 범위를 선택하세요.
         </p>
       </Modal>

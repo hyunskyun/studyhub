@@ -41,7 +41,7 @@ export default function MaterialsPage() {
             <span className="font-medium">Google Drive 파일 접근 권한이 없습니다.</span>
             <span className="block text-muted">Drive 권한은 Google 로그인과 별도로 요청합니다. 설정에서 연결할 수 있습니다.</span>
           </p>
-          <a href="#/settings" className="inline-flex h-9 items-center rounded-lg border border-line px-3 text-sm font-medium hover:bg-subtle">
+          <a href="#/settings" className="inline-flex h-8 items-center rounded-md bg-surface px-3 text-sm font-medium shadow-control hover:bg-subtle">
             설정으로
           </a>
         </div>
@@ -56,7 +56,7 @@ export default function MaterialsPage() {
           <ul className="divide-y divide-line">
             {data.driveFiles.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-3 px-4 py-3 md:px-5">
-                <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${f.status === 'ok' ? 'bg-subtle text-muted' : 'bg-danger-soft text-danger'}`}>
+                <span className={`flex size-10 shrink-0 items-center justify-center rounded-md ${f.status === 'ok' ? 'bg-subtle text-muted' : 'bg-danger-soft text-danger'}`}>
                   {f.status === 'ok' ? <FileIcon mime={f.mimeType} /> : <AlertCircle className="size-5" />}
                 </span>
                 <span className="min-w-0 flex-1">

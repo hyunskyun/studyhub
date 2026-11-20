@@ -5,7 +5,7 @@ import { cn } from './cn'
 export type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger'
 
 const TONE: Record<Tone, string> = {
-  neutral: 'bg-subtle text-muted',
+  neutral: 'bg-subtle text-muted shadow-[inset_0_0_0_1px_var(--line)]',
   accent: 'bg-accent-soft text-accent',
   success: 'bg-success-soft text-success',
   warning: 'bg-warning-soft text-warning',
@@ -16,7 +16,7 @@ export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; 
   return (
     <span
       className={cn(
-        'inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap',
+        'inline-flex h-5 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-medium whitespace-nowrap',
         TONE[tone],
         className,
       )}
@@ -30,7 +30,7 @@ export function SubjectDot({ color, className }: { color?: number; className?: s
   return (
     <span
       aria-hidden
-      className={cn('inline-block size-2.5 shrink-0 rounded-full', className)}
+      className={cn('inline-block size-2 shrink-0 rounded-full', className)}
       style={{ background: color === undefined ? 'var(--faint)' : `var(--sub-${color % 6})` }}
     />
   )
@@ -52,7 +52,7 @@ export function TagChips({ tags }: { tags: ExamTag[] }) {
   return (
     <span className="inline-flex gap-1">
       {tags.map((t) => (
-        <Badge key={t} className="h-5 px-1.5 text-[11px]">
+        <Badge key={t} className="h-[18px] px-1 text-[10.5px]">
           {TAG_LABEL[t]}
         </Badge>
       ))}

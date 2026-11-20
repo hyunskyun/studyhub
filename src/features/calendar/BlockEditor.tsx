@@ -73,7 +73,7 @@ export function BlockEditor({
             </Button>
           )}
           {block && (
-            <a href="#/timer" className="inline-flex h-11 items-center gap-2 rounded-xl border border-line px-4 text-[15px] font-medium hover:bg-subtle">
+            <a href="#/timer" className="inline-flex h-9 items-center gap-1.5 rounded-md bg-surface px-3.5 text-sm font-medium shadow-control hover:bg-subtle">
               <Play className="size-4" /> 공부 시작
             </a>
           )}
@@ -103,7 +103,7 @@ export function BlockEditor({
           </Field>
         </div>
         {errors.time && (
-          <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
             {errors.time}
           </p>
         )}

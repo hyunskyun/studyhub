@@ -64,7 +64,7 @@ export default function AcademyPage() {
               .map((c) => {
                 const co = course(c.courseId)
                 return (
-                  <li key={c.id} className="flex min-h-16 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 md:px-5">
+                  <li key={c.id} className="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 md:px-5">
                     <span className="w-28 shrink-0">
                       <span className="block text-sm font-medium">{formatDay(c.date)}</span>
                       <span className={cn('tabular text-xs text-muted', c.status === 'cancelled' && 'line-through')}>
@@ -104,13 +104,13 @@ export default function AcademyPage() {
               <Card key={w.id} title={co?.title} action={<span className="text-sm text-muted">{formatShortDay(w.weekOf)} 주 · 마감 {formatDay(w.due)}</span>}>
                 <ul>
                   {w.items.map((it) => (
-                    <li key={it.id} className="flex min-h-11 items-center gap-2">
+                    <li key={it.id} className="flex min-h-9 items-center gap-2">
                       <CheckButton
                         checked={it.done}
                         label={`${it.title} 완료`}
                         onChange={(v) => setWeeks((all) => all.map((x) => (x.id === w.id ? { ...x, items: x.items.map((y) => (y.id === it.id ? { ...y, done: v } : y)) } : x)))}
                       />
-                      <span className={cn('min-w-0 flex-1 text-[15px]', it.done && 'text-muted line-through')}>{it.title}</span>
+                      <span className={cn('min-w-0 flex-1 text-sm', it.done && 'text-muted line-through')}>{it.title}</span>
                       {it.overridden && (
                         <Badge>
                           <Pencil className="size-3" /> 이번 주만 수정
@@ -198,7 +198,7 @@ export default function AcademyPage() {
       >
         {attendance && (
           <div className="space-y-4">
-            <p className="text-[15px]">
+            <p className="text-sm">
               {course(attendance.courseId)?.title} · {formatDay(attendance.date)}
             </p>
             <div className="grid grid-cols-2 gap-3">

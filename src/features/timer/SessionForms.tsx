@@ -65,7 +65,7 @@ export function ManualSessionModal({ sessions, onClose }: { sessions: StudySessi
         <p className="text-xs text-muted">총 시간만 입력할 수는 없습니다. 05:00을 넘는 기록은 학습일별로 나뉘어 집계됩니다.</p>
         {s && e && !errors.end && <p className="text-sm">자습 {minutesBetween(s, e)}분 · 학습일 {formatDay(studyDayOf(s))}</p>}
         {conflicts.length > 0 && (
-          <div role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger">
+          <div role="alert" className="rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger">
             <p className="flex items-center gap-1.5 font-semibold">
               <AlertTriangle className="size-4" /> 기존 기록과 시간이 겹쳐 저장할 수 없습니다
             </p>
@@ -126,10 +126,10 @@ export function ConflictResolver({ candidate, sessions, onClose }: { candidate: 
       }
     >
       <div className="space-y-4">
-        <p className="text-[15px]">오프라인에서 기록된 구간이 기존 기록과 겹칩니다. 확정된 공부 기록은 서로 겹칠 수 없으므로 수정할 기록을 고르세요.</p>
-        <div className="space-y-2" role="radiogroup" aria-label="수정할 기록">
+        <p className="text-sm">오프라인에서 기록된 구간이 기존 기록과 겹칩니다. 확정된 공부 기록은 서로 겹칠 수 없으므로 수정할 기록을 고르세요.</p>
+        <div className="divide-y divide-line border-y border-line" role="radiogroup" aria-label="수정할 기록">
           {all.map((x) => (
-            <label key={x.id} className={`block rounded-2xl border p-3 ${target === x.id ? 'border-accent bg-accent-soft/50' : 'border-line'}`}>
+            <label key={x.id} className={`block py-3 ${target === x.id ? '' : 'opacity-70'}`}>
               <span className="flex items-center gap-2">
                 <input type="radio" name="target" className="size-5 accent-[var(--accent)]" checked={target === x.id} onChange={() => setTarget(x.id)} />
                 <span className="font-medium">{subjectName(x.subjectId)}</span>
@@ -150,7 +150,7 @@ export function ConflictResolver({ candidate, sessions, onClose }: { candidate: 
             </label>
           ))}
         </div>
-        <p role="status" className={`rounded-xl px-3 py-2 text-sm ${stillOverlaps ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'}`}>
+        <p role="status" className={`rounded-md px-3 py-2 text-sm ${stillOverlaps ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'}`}>
           {stillOverlaps ? '아직 시간이 겹칩니다. 겹침을 없애야 확정할 수 있습니다.' : '겹침이 해소되었습니다.'}
         </p>
         <PrototypeNotice />

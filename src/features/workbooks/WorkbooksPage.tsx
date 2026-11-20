@@ -28,7 +28,7 @@ export default function WorkbooksPage() {
     )
 
   const list = (
-    <div className="space-y-2">
+    <div className="divide-y divide-line overflow-hidden rounded-lg bg-surface shadow-panel">
       {books.map((b) => {
         const p = workbookProgress(b)
         return (
@@ -40,16 +40,16 @@ export default function WorkbooksPage() {
               setSelecting(false)
               setPicked(new Set())
             }}
-            className={cn('block w-full rounded-2xl border bg-surface p-4 text-left transition-colors', selectedId === b.id ? 'border-accent' : 'border-line hover:border-faint')}
+            className={cn('block w-full border-l-2 px-4 py-3 text-left transition-colors', selectedId === b.id ? 'border-accent bg-accent-soft/40' : 'border-transparent hover:bg-subtle')}
           >
             <span className="flex items-start justify-between gap-2">
               <span className="min-w-0">
-                <span className="block truncate font-semibold">{b.title}</span>
+                <span className="block truncate font-medium">{b.title}</span>
                 <SubjectLabel subject={subject(b.subjectId)} />
               </span>
               {p.complete ? <Badge tone="success">완료</Badge> : <span className="tabular text-sm text-muted">{Math.round((p.done / Math.max(1, p.total)) * 100)}%</span>}
             </span>
-            <ProgressBar className="mt-3" value={p.done} max={p.total} tone={p.complete ? 'success' : 'accent'} />
+            <ProgressBar className="mt-2" value={p.done} max={p.total} tone={p.complete ? 'success' : 'accent'} />
             <span className="tabular mt-1.5 block text-xs text-muted">
               Part {p.done}/{p.total} · 중단원 {b.units.length}개
             </span>
@@ -62,10 +62,10 @@ export default function WorkbooksPage() {
   const detail = selected && (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" className="md:hidden" icon={<ArrowLeft className="size-4" />} onClick={() => setSelectedId(null)}>
+        <Button variant="ghost" className="lg:hidden" icon={<ArrowLeft className="size-4" />} onClick={() => setSelectedId(null)}>
           목록
         </Button>
-        <h2 className="min-w-0 flex-1 truncate text-xl font-bold">{selected.title}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{selected.title}</h2>
         <Button size="sm" variant={selecting ? 'primary' : 'secondary'} onClick={() => { setSelecting(!selecting); setPicked(new Set()) }}>
           {selecting ? '선택 끝' : '여러 개 선택'}
         </Button>
@@ -78,14 +78,14 @@ export default function WorkbooksPage() {
           <Paperclip className="size-4" /> 연결된 학습 자료 {data.driveFiles.filter((f) => f.links.some((l) => l.kind === 'workbook' && l.id === selected.id)).length}개
         </p>
       )}
-      <div className="space-y-3">
+      <div className="divide-y divide-line rounded-lg bg-surface shadow-panel">
         {selected.units.map((u) => {
           const done = u.parts.filter((p) => p.done).length
           const all = new Set(u.parts.map((p) => p.id))
           return (
-            <Card key={u.id}>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <p className="min-w-0 flex-1 font-semibold">{u.title}</p>
+            <div key={u.id} className="p-4 md:px-5">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <p className="min-w-0 flex-1 font-medium">{u.title}</p>
                 <span className="tabular text-sm text-muted">
                   {done}/{u.parts.length}
                 </span>
@@ -99,7 +99,7 @@ export default function WorkbooksPage() {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-1.5">
                 {u.parts.map((p) => {
                   const isPicked = picked.has(p.id)
                   return (
@@ -116,23 +116,23 @@ export default function WorkbooksPage() {
                         } else setParts(new Set([p.id]), !p.done)
                       }}
                       className={cn(
-                        'relative flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-colors',
-                        p.done ? 'border-transparent bg-accent text-accent-fg' : 'border-line bg-surface hover:bg-subtle',
-                        selecting && isPicked && 'ring-2 ring-fg ring-offset-2 ring-offset-surface',
+                        'tabular relative flex h-9 items-center justify-center rounded text-sm transition-colors',
+                        p.done ? 'bg-accent font-medium text-accent-fg' : 'bg-subtle text-fg shadow-[inset_0_0_0_1px_var(--line)] hover:bg-line/60',
+                        selecting && isPicked && 'ring-2 ring-fg ring-offset-1 ring-offset-surface',
                       )}
                     >
                       {p.label.replace('Part ', '')}
-                      {linked.has(p.id) && <Lock aria-label="다른 기록에 연결됨" className="absolute top-1 right-1 size-3 opacity-70" />}
+                      {linked.has(p.id) && <Lock aria-label="다른 기록에 연결됨" className="absolute top-0.5 right-0.5 size-2.5 opacity-60" />}
                     </button>
                   )
                 })}
               </div>
-            </Card>
+            </div>
           )
         })}
       </div>
       {selecting && (
-        <div className="sticky bottom-[calc(80px+env(safe-area-inset-bottom))] mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-3 shadow-lg md:bottom-4">
+        <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-surface p-2.5 pl-4 shadow-xl ring-1 ring-line md:bottom-4">
           <span className="flex-1 text-sm">{picked.size}개 선택</span>
           <Button size="sm" disabled={!picked.size} onClick={() => setParts(picked, false)}>
             완료 취소
@@ -175,9 +175,9 @@ export default function WorkbooksPage() {
           />
         </Card>
       ) : (
-        <div className="grid gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <div className={cn(selected && 'hidden md:block')}>{list}</div>
-          <div className={cn(!selected && 'hidden md:block')}>
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div className={cn(selected && 'hidden lg:block')}>{list}</div>
+          <div className={cn(!selected && 'hidden lg:block')}>
             {detail ?? (
               <Card>
                 <EmptyState compact title="문제집을 선택하세요" description="Part를 눌러 완료를 체크합니다." />

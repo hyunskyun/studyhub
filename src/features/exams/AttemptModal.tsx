@@ -69,12 +69,12 @@ export function AttemptModal({ exam, attempt, onClose }: { exam: MockExam; attem
           {wrong.length === 0 ? (
             <p className="text-sm text-faint">아직 입력한 오답이 없습니다.</p>
           ) : (
-            <ul className="divide-y divide-line rounded-xl border border-line">
+            <ul className="divide-y divide-line rounded-md border border-line">
               {wrong
                 .slice()
                 .sort((a, b) => a.question - b.question)
                 .map((w) => (
-                  <li key={w.question} className={cn('flex min-h-12 items-center gap-3 px-3', !!totalN && w.question > totalN && 'bg-danger-soft')}>
+                  <li key={w.question} className={cn('flex min-h-10 items-center gap-3 px-3', !!totalN && w.question > totalN && 'bg-danger-soft')}>
                     <span className="tabular w-12 font-semibold">{w.question}번</span>
                     <span className="flex-1 text-sm">{causeName(w.causeId)}</span>
                     {totalN && w.question > totalN && <span className="text-xs text-danger">범위 밖</span>}
@@ -108,7 +108,7 @@ export function AttemptModal({ exam, attempt, onClose }: { exam: MockExam; attem
             </Button>
           </div>
           {addError && <p className="mt-1 text-xs text-danger">{addError}</p>}
-          {j.outOfRange.length > 0 && <p className="mt-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">총 문항 수를 벗어난 번호가 있습니다. 수정하기 전에는 정답 판정을 확정할 수 없습니다.</p>}
+          {j.outOfRange.length > 0 && <p className="mt-2 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">총 문항 수를 벗어난 번호가 있습니다. 수정하기 전에는 정답 판정을 확정할 수 없습니다.</p>}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {confirmed ? (
               <Button size="sm" onClick={() => setConfirmed(false)}>
@@ -126,7 +126,7 @@ export function AttemptModal({ exam, attempt, onClose }: { exam: MockExam; attem
         {others.length > 0 && questions.length > 0 && (
           <section>
             <h3 className="mb-2 text-sm font-semibold">회차별 오답 비교</h3>
-            <div className="overflow-x-auto rounded-xl border border-line">
+            <div className="overflow-x-auto rounded-md border border-line">
               <table className="w-full text-sm">
                 <thead className="bg-subtle text-muted">
                   <tr>

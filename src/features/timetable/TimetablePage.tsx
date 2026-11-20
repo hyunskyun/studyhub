@@ -69,9 +69,9 @@ export default function TimetablePage() {
                       return (
                         <td key={i} className={cn('border-b border-l border-line p-1', todayWd === i + 1 && 'bg-accent-soft/40')}>
                           {editing ? (
-                            <input aria-label={`${DAYS[i]} ${p}교시`} defaultValue={c?.subject ?? ''} className="h-11 w-full rounded-lg border border-line bg-surface px-2 text-center" />
+                            <input aria-label={`${DAYS[i]} ${p}교시`} defaultValue={c?.subject ?? ''} className="h-8 w-full rounded border border-line bg-surface px-1 text-center text-sm" />
                           ) : (
-                            <span className="flex h-11 items-center justify-center rounded-lg text-center">{c?.subject ?? ''}</span>
+                            <span className="flex h-9 items-center justify-center rounded-lg text-center">{c?.subject ?? ''}</span>
                           )}
                         </td>
                       )
