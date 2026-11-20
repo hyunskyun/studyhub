@@ -13,6 +13,7 @@
     {
       "binding": "DB",
       "database_name": "studyhub",
+      "database_id": "130994bc-3cec-41b0-8ce8-edbd6463d542",
       "migrations_dir": "migrations"
     }
   ],
