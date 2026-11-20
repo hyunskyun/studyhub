@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { GraduationCap, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Search, Settings, WifiOff, X } from 'lucide-react'
 import { IconButton } from '../components/ui/Button'
 import { cn } from '../components/ui/cn'
+import { AccessKeyGate } from './AccessKeyGate'
 import { useAppData } from './data-context'
 import { findRoute, GROUP_LABEL, ROUTES, type RouteDef } from './routes'
 import { href, useRoute } from './router'
@@ -178,13 +179,15 @@ export function AppShell() {
   const route = findRoute(path)
   const Page = route.page
   const online = useOnline()
-  const { mode, ready } = useAppData()
+  const { mode, status, loadError, refresh } = useAppData()
   const [collapsed, setCollapsed] = useState(() => readPref(COLLAPSE_KEY) === '1')
 
   useEffect(() => {
     document.title = `${route.label} · 학업 플래너`
     window.scrollTo(0, 0)
   }, [route.label])
+
+  if (status === 'need-key') return <AccessKeyGate />
 
   return (
     <div className="flex min-h-svh bg-bg">
@@ -222,7 +225,18 @@ export function AppShell() {
           )}
         >
           <Suspense fallback={<div className="py-20 text-center text-sm text-muted">불러오는 중…</div>}>
-            {ready ? <Page key={route.path} /> : <div className="py-20 text-center text-sm text-muted">불러오는 중…</div>}
+            {status === 'ready' ? (
+              <Page key={route.path} />
+            ) : status === 'error' ? (
+              <div role="alert" className="py-20 text-center text-sm">
+                <p className="text-danger">{loadError}</p>
+                <button type="button" onClick={() => refresh()} className="mt-3 h-8 rounded-md bg-surface px-3 font-medium shadow-control">
+                  다시 시도
+                </button>
+              </div>
+            ) : (
+              <div className="py-20 text-center text-sm text-muted">불러오는 중…</div>
+            )}
           </Suspense>
         </main>
       </div>

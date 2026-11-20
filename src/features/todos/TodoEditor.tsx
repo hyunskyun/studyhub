@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
+import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { Button, IconButton } from '../../components/ui/Button'
 import { Field, Segmented, TextInput } from '../../components/ui/Form'
-import { PrototypeNotice } from '../../components/ui/Layout'
 import { Modal } from '../../components/ui/Modal'
 import type { ExamTag, Priority, Todo } from '../../domain/types'
 import { SubjectSelect, TagPicker } from '../shared/inputs'
@@ -15,13 +16,36 @@ export function TodoEditor({ todo, onClose }: { todo: Todo | null; onClose: () =
   const [priority, setPriority] = useState<Priority>(todo?.priority ?? 'medium')
   const [dueDate, setDueDate] = useState(todo?.due?.date ?? '')
   const [dueTime, setDueTime] = useState(todo?.due?.time ?? '')
-  const [subs, setSubs] = useState(todo?.subtasks.map((s) => ({ title: s.title, dueDate: s.dueDate ?? '' })) ?? [])
+  const [subs, setSubs] = useState<{ id?: string; title: string; dueDate: string }[]>(
+    todo?.subtasks.map((s) => ({ id: s.id, title: s.title, dueDate: s.dueDate ?? '' })) ?? [],
+  )
   const [touched, setTouched] = useState(false)
+  const { actions } = useAppData()
+  const { run, pending, error } = useRun()
 
   const titleError = !title.trim() ? '제목을 입력하세요.' : undefined
   const timeError = dueTime && !dueDate ? '마감 시각을 넣으려면 마감일도 입력하세요.' : undefined
   // 상위 마감이 하위 마감보다 빨라도 경고 후 저장 허용 (Q149)
   const lateSub = dueDate ? subs.find((s) => s.dueDate && s.dueDate > dueDate) : undefined
+
+  const submit = async () => {
+    setTouched(true)
+    if (titleError || timeError) return
+    const ok = await run(() =>
+      actions.saveTodo(
+        {
+          title,
+          subjectId: subjectId || undefined,
+          tags,
+          priority,
+          due: dueDate ? { date: dueDate, time: dueTime || undefined } : undefined,
+          subtasks: subs.map((x) => ({ id: x.id, title: x.title, dueDate: x.dueDate || undefined })),
+        },
+        todo?.id,
+      ),
+    )
+    if (ok) onClose()
+  }
 
   return (
     <Modal
@@ -31,8 +55,21 @@ export function TodoEditor({ todo, onClose }: { todo: Todo | null; onClose: () =
       size="lg"
       footer={
         <>
+          {todo && (
+            <Button
+              variant="ghost"
+              className="mr-auto text-danger"
+              icon={<Trash2 className="size-4" />}
+              disabled={pending}
+              onClick={async () => {
+                if (await run(() => actions.removeTodo(todo.id))) onClose()
+              }}
+            >
+              휴지통으로
+            </Button>
+          )}
           <Button onClick={onClose}>취소</Button>
-          <Button variant="primary" onClick={() => setTouched(true)} disabled={touched && (!!titleError || !!timeError)}>
+          <Button variant="primary" onClick={submit} disabled={pending || (touched && (!!titleError || !!timeError))}>
             저장
           </Button>
         </>
@@ -95,7 +132,11 @@ export function TodoEditor({ todo, onClose }: { todo: Todo | null; onClose: () =
           )}
           {lateSub && <p className="mt-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">상위 마감일이 하위 항목 「{lateSub.title || '제목 없음'}」의 마감일보다 빠릅니다. 그대로 저장할 수 있습니다.</p>}
         </div>
-        <PrototypeNotice />
+        {error && (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   )

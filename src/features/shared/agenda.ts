@@ -1,5 +1,5 @@
 // 하루 일정 합성: 학습 계획 블록 + 캘린더 일정 + 학원 수업 + 학교 시간표
-import { addDays, kstDateTime, studyDayStartMs, weekdayOf, type DateStr } from '../../domain/time'
+import { addDays, daysBetween, kstDateTime, studyDayOf, studyDayStartMs, weekdayOf, type DateStr } from '../../domain/time'
 import type { AppData } from '../../domain/types'
 
 export type AgendaKind = 'plan' | 'school' | 'academy' | 'personal'
@@ -14,6 +14,8 @@ export interface AgendaItem {
   note?: string
   recurring?: boolean
   cancelled?: boolean
+  /** 이 항목이 표시된 학습일 (반복 회차 삭제용) */
+  day?: DateStr
 }
 
 export const AGENDA_LABEL: Record<AgendaKind, string> = {
@@ -37,9 +39,23 @@ export function agendaForDay(data: AppData, day: DateStr, subjectName: (id?: str
       items.push({ id: b.id, kind: 'plan', title: subjectName(b.subjectId), start: b.start, end: b.end, subjectId: b.subjectId })
 
   for (const e of data.events) {
-    if (within(e.start)) {
-      items.push({ id: e.id, kind: e.kind, title: e.title, start: e.start, end: e.end, recurring: !!e.recurrence })
+    if (!e.recurrence) {
+      if (within(e.start)) items.push({ id: e.id, kind: e.kind, title: e.title, start: e.start, end: e.end, day })
+      continue
     }
+    // 주간 반복: 시작 학습일 이후 같은 요일마다, 개별 삭제된 회차는 제외 (Q11, Q142)
+    const firstDay = studyDayOf(e.start)
+    if (day < firstDay || !e.recurrence.weekdays.includes(weekdayOf(day)) || e.exceptDates?.includes(day)) continue
+    const shift = daysBetween(firstDay, day) * 86_400_000
+    items.push({
+      id: e.id,
+      kind: e.kind,
+      title: e.title,
+      start: new Date(Date.parse(e.start) + shift).toISOString(),
+      end: new Date(Date.parse(e.end) + shift).toISOString(),
+      recurring: true,
+      day,
+    })
   }
 
   for (const c of data.classes) {

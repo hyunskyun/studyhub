@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Archive, RotateCcw, Trash2 } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { useNow } from '../../app/useNow'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Segmented } from '../../components/ui/Form'
-import { Card, EmptyState, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
+import { Card, EmptyState, PageHeader } from '../../components/ui/Layout'
 import { ConfirmDialog } from '../../components/ui/Modal'
 import type { RecordKind, TrashItem } from '../../domain/types'
 
@@ -20,13 +21,15 @@ const KIND: Record<RecordKind, string> = {
   subject: '과목',
   driveLink: '파일 연결',
   session: '공부 기록',
+  event: '일정',
 }
 
 const RETENTION_DAYS = 30
 
 export default function ArchivePage() {
   const now = useNow()
-  const { data } = useAppData()
+  const { data, actions } = useAppData()
+  const { run, error } = useRun()
   const [tab, setTab] = useState<'trash' | 'archive'>('trash')
   const [restore, setRestore] = useState<TrashItem | null>(null)
   const [purge, setPurge] = useState<TrashItem | null>(null)
@@ -47,6 +50,11 @@ export default function ArchivePage() {
         ]}
       />
 
+      {error && (
+        <p role="alert" className="mb-3 rounded-lg bg-danger-soft px-4 py-2.5 text-sm text-danger">
+          {error}
+        </p>
+      )}
       {tab === 'trash' ? (
         <>
           <p className="mb-3 text-sm text-muted">삭제한 항목은 30일 동안 보관된 뒤 영구 삭제됩니다. Google Drive 원본 파일은 휴지통 대상이 아닙니다.</p>
@@ -106,18 +114,35 @@ export default function ArchivePage() {
       )}
 
       {/* 복원: 계획 블록 겹침 시 시간을 먼저 수정 (Q144), 프로젝트는 연결 항목 함께 복원 (Q135) */}
-      <ConfirmDialog open={!!restore} onClose={() => setRestore(null)} title="복원할까요?" confirmLabel="복원" onConfirm={() => setRestore(null)}>
+      <ConfirmDialog
+        open={!!restore}
+        onClose={() => setRestore(null)}
+        title="복원할까요?"
+        confirmLabel="복원"
+        onConfirm={() => {
+          if (restore) run(() => actions.restore(restore.collection, restore.id))
+          setRestore(null)
+        }}
+      >
         <p>「{restore?.title}」을(를) 원래 위치로 복원합니다.</p>
         {restore?.kind === 'project' && <p className="text-sm text-muted">함께 삭제된 할 일·하위 항목과 연결 관계도 함께 복원됩니다.</p>}
         {restore?.kind === 'block' && (
           <p className="rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">복원할 시간에 다른 학습 계획이 있으면 먼저 날짜·시간을 바꿔야 복원할 수 있습니다.</p>
         )}
-        <PrototypeNotice />
       </ConfirmDialog>
-      <ConfirmDialog open={!!purge} onClose={() => setPurge(null)} title="영구 삭제할까요?" confirmLabel="영구 삭제" tone="danger" onConfirm={() => setPurge(null)}>
+      <ConfirmDialog
+        open={!!purge}
+        onClose={() => setPurge(null)}
+        title="영구 삭제할까요?"
+        confirmLabel="영구 삭제"
+        tone="danger"
+        onConfirm={() => {
+          if (purge) run(() => actions.purge(purge.collection, purge.id))
+          setPurge(null)
+        }}
+      >
         <p>「{purge?.title}」을(를) 영구 삭제합니다. 되돌릴 수 없습니다.</p>
         <p className="text-sm text-muted">과거 공부 기록에 남은 이름 정보는 유지됩니다.</p>
-        <PrototypeNotice />
       </ConfirmDialog>
     </>
   )

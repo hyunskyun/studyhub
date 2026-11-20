@@ -1,34 +1,33 @@
 import { useState } from 'react'
 import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Repeat } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { useNow } from '../../app/useNow'
 import { Badge, SubjectDot } from '../../components/ui/Badge'
 import { Button, IconButton } from '../../components/ui/Button'
-import { ChipToggle, Field, Segmented, TextInput } from '../../components/ui/Form'
-import { Card, EmptyState, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
+import { Segmented } from '../../components/ui/Form'
+import { Card, EmptyState, PageHeader } from '../../components/ui/Layout'
 import { ConfirmDialog, Modal } from '../../components/ui/Modal'
 import { addDays, formatDay, formatShortDay, formatTime, mondayOf, studyDayOf, studyDayStartMs, weekdayLabel } from '../../domain/time'
 import type { TimeBlock } from '../../domain/types'
 import { AGENDA_LABEL, agendaForDay, type AgendaItem } from '../shared/agenda'
 import { BlockEditor } from './BlockEditor'
 import { DayTimeline } from './DayTimeline'
+import { EventEditor } from './EventEditor'
 
 type View = 'day' | 'week'
-type Scope = 'this' | 'following' | 'all'
 
 export default function CalendarPage() {
   const now = useNow()
-  const { data, subject, subjectName } = useAppData()
+  const { data, subject, subjectName, actions } = useAppData()
+  const { run, error, clearError } = useRun()
   const [view, setView] = useState<View>('day') // 기본 일간 보기 (Q152)
   const [day, setDay] = useState(() => studyDayOf(Date.now()))
-  // UI 프로토타입: 블록 편집은 화면 상태에만 반영
-  const [blocks, setBlocks] = useState<TimeBlock[]>(data.blocks)
+  const blocks = data.blocks
   const [editing, setEditing] = useState<{ block: TimeBlock | null } | null>(null)
   const [eventOpen, setEventOpen] = useState<AgendaItem | null>(null)
-  const [scope, setScope] = useState<Scope>('this')
   const [deleteTarget, setDeleteTarget] = useState<TimeBlock | null>(null)
   const [newEvent, setNewEvent] = useState(false)
-  const [repeatDays, setRepeatDays] = useState<number[]>([])
 
   const dayStart = studyDayStartMs(day)
   const dayBlocks = blocks.filter((b) => Date.parse(b.start) >= dayStart && Date.parse(b.start) < dayStart + 86_400_000)
@@ -106,16 +105,18 @@ export default function CalendarPage() {
             blocks={dayBlocks}
             events={otherItems}
             nowMs={now}
-            onBlocksChange={(changed) => setBlocks((all) => all.map((b) => changed.find((c) => c.id === b.id) ?? b))}
+            onMoveBlock={(b) => run(() => actions.saveBlock(b))}
             onOpenBlock={(b) => setEditing({ block: b })}
             onOpenEvent={(e) => {
-              setScope('this')
+              clearError()
               setEventOpen(e)
             }}
           />
-          <div className="mt-3">
-            <PrototypeNotice>드래그·편집 결과는 화면에만 반영되고 저장되지 않습니다.</PrototypeNotice>
-          </div>
+          {error && !eventOpen && (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {error}
+            </p>
+          )}
         </>
       ) : (
         <div className="grid gap-px overflow-hidden rounded-lg bg-line shadow-panel sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -167,10 +168,6 @@ export default function CalendarPage() {
           day={day}
           others={blocks}
           onClose={() => setEditing(null)}
-          onSave={(b) => {
-            setBlocks((all) => (all.some((x) => x.id === b.id) ? all.map((x) => (x.id === b.id ? b : x)) : [...all, b]))
-            setEditing(null)
-          }}
           onDelete={(b) => {
             setEditing(null)
             setDeleteTarget(b)
@@ -185,55 +182,14 @@ export default function CalendarPage() {
         confirmLabel="휴지통으로 이동"
         tone="danger"
         onConfirm={() => {
-          setBlocks((all) => all.filter((b) => b.id !== deleteTarget?.id))
+          if (deleteTarget) run(() => actions.removeBlock(deleteTarget.id))
           setDeleteTarget(null)
         }}
       >
         <p>계획만 30일 휴지통으로 이동합니다. 이 계획에서 시작한 실제 공부 기록은 그대로 유지됩니다.</p>
       </ConfirmDialog>
 
-      <Modal
-        open={newEvent}
-        onClose={() => setNewEvent(false)}
-        title="일정 추가"
-        footer={
-          <>
-            <Button onClick={() => setNewEvent(false)}>취소</Button>
-            <Button variant="primary" disabled title="2단계에서 연결">
-              저장
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Field label="제목" required>
-            {(id) => <TextInput id={id} placeholder="예: 진로 상담" />}
-          </Field>
-          <Field label="날짜" required>
-            {(id) => <TextInput id={id} type="date" defaultValue={day} />}
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="시작" required>
-              {(id) => <TextInput id={id} type="time" defaultValue="16:00" />}
-            </Field>
-            <Field label="종료" required>
-              {(id) => <TextInput id={id} type="time" defaultValue="17:00" />}
-            </Field>
-          </div>
-          <div>
-            <p className="mb-1.5 text-sm font-medium">매주 반복 (선택)</p>
-            <div className="flex flex-wrap gap-2">
-              {['일', '월', '화', '수', '목', '금', '토'].map((w, i) => (
-                <ChipToggle key={w} selected={repeatDays.includes(i)} onClick={() => setRepeatDays((r) => (r.includes(i) ? r.filter((x) => x !== i) : [...r, i]))}>
-                  {w}
-                </ChipToggle>
-              ))}
-            </div>
-          </div>
-          <p className="text-xs text-muted">특정 날짜의 학교 예외 수업도 여기서 일정으로 추가합니다(정규 시간표는 바뀌지 않음).</p>
-          <PrototypeNotice />
-        </div>
-      </Modal>
+      {newEvent && <EventEditor day={day} onClose={() => setNewEvent(false)} />}
 
       {/* 일정 상세: 반복 일정 수정 범위 선택(Q131), 삭제는 한 회차만(Q142) */}
       <Modal
@@ -242,12 +198,15 @@ export default function CalendarPage() {
         title={eventOpen?.title ?? ''}
         footer={
           eventOpen?.kind === 'personal' ? (
-            <>
-              <Button variant="ghost" className="mr-auto text-danger">
-                {eventOpen.recurring ? '이 회차만 삭제' : '삭제'}
-              </Button>
-              <Button variant="primary">수정</Button>
-            </>
+            <Button
+              variant="ghost"
+              className="text-danger"
+              onClick={async () => {
+                if (await run(() => actions.removeEventOccurrence(eventOpen.id, eventOpen.day ?? day))) setEventOpen(null)
+              }}
+            >
+              {eventOpen.recurring ? '이 회차만 삭제' : '휴지통으로'}
+            </Button>
           ) : undefined
         }
       >
@@ -267,23 +226,12 @@ export default function CalendarPage() {
             </div>
             {eventOpen.kind === 'school' && <p className="text-sm text-muted">학교 정규 수업은 학교 시간표에서 관리하며 학습 시간 통계에 포함되지 않습니다.</p>}
             {eventOpen.kind === 'academy' && <p className="text-sm text-muted">출석·휴강·보강은 학원 화면에서 관리합니다.</p>}
-            {eventOpen.kind === 'personal' && eventOpen.recurring && (
-              <fieldset>
-                <legend className="mb-2 text-sm font-medium">수정 범위</legend>
-                <Segmented
-                  label="수정 범위"
-                  value={scope}
-                  onChange={setScope}
-                  options={[
-                    { value: 'this', label: '이번만' },
-                    { value: 'following', label: '이번 및 이후' },
-                    { value: 'all', label: '전체' },
-                  ]}
-                />
-                <p className="mt-2 text-xs text-muted">삭제는 선택한 회차 하나에만 적용됩니다.</p>
-              </fieldset>
+            {eventOpen.kind === 'personal' && eventOpen.recurring && <p className="text-sm text-muted">반복 일정의 삭제는 이 날짜의 회차 하나에만 적용됩니다.</p>}
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
             )}
-            <PrototypeNotice />
           </div>
         )}
       </Modal>

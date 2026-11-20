@@ -44,6 +44,8 @@ export interface CalendarEvent {
   end: string
   /** 주간 반복 (Q11). 수정 범위 선택(Q131), 삭제는 한 회차(Q142) */
   recurrence?: { weekdays: number[] }
+  /** 반복 일정에서 개별 삭제된 회차의 날짜 (Q142) */
+  exceptDates?: DateStr[]
 }
 
 export interface Subtask {
@@ -112,10 +114,12 @@ export interface ActiveTimer {
   activity?: ActivityRef
   planBlockId?: ID
   segmentStart: string
+  /** 현재 구간에서 끝난 휴식들 */
+  breaks?: StudyBreak[]
   /** 휴식 중이면 휴식 시작 시각 */
   breakStart?: string
-  /** 이 기기에서 조작 가능한지 (다른 기기 소유 시 읽기 전용: Q148) */
-  ownedHere: boolean
+  /** 타이머를 조작할 수 있는 기기 (다른 기기는 읽기 전용: Q148) */
+  ownerDeviceId?: string
   ownerDeviceName?: string
 }
 
@@ -253,6 +257,8 @@ export interface Goal {
 }
 
 export interface TimetableSlot {
+  /** `${weekday}-${period}` */
+  id?: ID
   weekday: number
   period: number
   subject: string
@@ -282,9 +288,12 @@ export type RecordKind =
   | 'subject'
   | 'driveLink'
   | 'session'
+  | 'event'
 
 export interface TrashItem {
   id: ID
+  /** 저장 컬렉션 이름 (복원·영구 삭제 대상 지정) */
+  collection: string
   kind: RecordKind
   title: string
   deletedAt: string

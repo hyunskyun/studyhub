@@ -1,5 +1,5 @@
 {
-  "name": "my-ipad-app",
+  "name": "studyhub",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test tests/",
+    "db:migrate:local": "wrangler d1 migrations apply studyhub --local",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",
@@ -20,6 +23,7 @@
     "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
@@ -32,6 +36,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.6",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "wrangler": "^4.165.0"
   }
 }

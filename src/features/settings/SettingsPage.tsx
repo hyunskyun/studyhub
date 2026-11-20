@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { Download, FolderOpen, LogIn, Monitor, Moon, Plus, Sun, Upload } from 'lucide-react'
+import { Download, FolderOpen, KeyRound, Monitor, Moon, Sun, Upload } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
 import { useTheme, type ThemePref } from '../../app/theme-context'
-import { SubjectDot } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { cn } from '../../components/ui/cn'
 import { Toggle } from '../../components/ui/Form'
-import { Card, EmptyState, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
+import { Card, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
 import { ConfirmDialog } from '../../components/ui/Modal'
+import { SubjectsCard } from './SubjectsCard'
 
 const THEMES: { value: ThemePref; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: '라이트', icon: Sun },
@@ -17,18 +17,19 @@ const THEMES: { value: ThemePref; label: string; icon: typeof Sun }[] = [
 
 export default function SettingsPage() {
   const { pref, setPref } = useTheme()
-  const { data, mode, setFixture } = useAppData()
+  const { data, mode, setFixture, setAccessKey } = useAppData()
   const [restoreOpen, setRestoreOpen] = useState(false)
+  const [forgetOpen, setForgetOpen] = useState(false)
 
   return (
     <>
       <PageHeader title="설정" />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="계정">
+        <Card title="개인 접근 키">
           <div className="flex flex-col items-start gap-3">
-            <p className="text-sm text-muted">Google 계정으로 로그인하면 PC·iPad·Android 기기 사이에 기록이 동기화됩니다.</p>
-            <Button variant="primary" icon={<LogIn className="size-4" />} disabled title="3단계에서 연결">
-              Google로 로그인
+            <p className="text-sm text-muted">이 기기에 저장된 키로 서버(Cloudflare D1)에 접근합니다. 다른 기기에서는 처음 한 번 같은 키를 입력하세요.</p>
+            <Button icon={<KeyRound className="size-4" />} onClick={() => setForgetOpen(true)} disabled={mode === 'fixture'}>
+              이 기기에서 키 지우기
             </Button>
           </div>
         </Card>
@@ -66,30 +67,7 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <Card title="과목" action={<Button size="sm" icon={<Plus className="size-4" />}>추가</Button>}>
-          {data.subjects.length === 0 ? (
-            <EmptyState compact title="과목이 없습니다" description="대분류(예: 수학) 아래에 세부 과목(예: 미적분Ⅰ)을 둘 수 있습니다." />
-          ) : (
-            <ul className="space-y-1">
-              {data.subjects
-                .filter((s) => !s.parentId)
-                .map((r) => (
-                  <li key={r.id}>
-                    <p className="flex min-h-10 items-center gap-2 font-medium">
-                      <SubjectDot color={r.color} /> {r.name}
-                    </p>
-                    {data.subjects
-                      .filter((s) => s.parentId === r.id)
-                      .map((s) => (
-                        <p key={s.id} className="flex min-h-9 items-center gap-2 pl-5 text-sm text-muted">
-                          └ {s.name}
-                        </p>
-                      ))}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </Card>
+        <SubjectsCard />
 
         <Card title="오답 원인 분류">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -131,6 +109,20 @@ export default function SettingsPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={forgetOpen}
+        onClose={() => setForgetOpen(false)}
+        title="이 기기에서 접근 키를 지울까요?"
+        confirmLabel="지우기"
+        tone="danger"
+        onConfirm={() => {
+          setForgetOpen(false)
+          setAccessKey(null)
+        }}
+      >
+        <p>서버의 데이터는 그대로이며, 다시 쓰려면 키를 입력해야 합니다.</p>
+      </ConfirmDialog>
 
       {/* JSON 복원은 전체 대체 (Q80) */}
       <ConfirmDialog open={restoreOpen} onClose={() => setRestoreOpen(false)} title="백업 파일로 복원" confirmLabel="파일 선택" tone="danger" confirmDisabled onConfirm={() => setRestoreOpen(false)}>

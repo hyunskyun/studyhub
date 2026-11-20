@@ -1,31 +1,31 @@
 import { useState } from 'react'
-import { ArrowLeft, BookOpen, CheckCheck, Lock, Paperclip, Plus, Undo2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCheck, Lock, Paperclip, Plus, Trash2, Undo2 } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { Badge, SubjectLabel } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { cn } from '../../components/ui/cn'
-import { Card, EmptyState, PageHeader, ProgressBar, PrototypeNotice } from '../../components/ui/Layout'
+import { Card, EmptyState, PageHeader, ProgressBar } from '../../components/ui/Layout'
+import { ConfirmDialog } from '../../components/ui/Modal'
 import { workbookProgress } from '../../domain/logic'
-import type { Workbook } from '../../domain/types'
 import { WorkbookCreate } from './WorkbookCreate'
 
 export default function WorkbooksPage() {
-  const { data, subject } = useAppData()
-  // UI 프로토타입: Part 체크는 화면 상태에서만
-  const [books, setBooks] = useState<Workbook[]>(data.workbooks)
+  const { data, subject, actions } = useAppData()
+  const { run, error } = useRun()
+  const books = data.workbooks
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selecting, setSelecting] = useState(false)
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [createOpen, setCreateOpen] = useState(false)
+  const [unitOpen, setUnitOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   // 다른 기록(할 일·시험 범위)에 연결된 Part는 삭제 금지 (Q94)
   const linked = new Set([...data.todos.flatMap((t) => t.partIds), ...data.schoolExams.flatMap((e) => e.scopePartIds)])
   const selected = books.find((b) => b.id === selectedId)
 
-  const setParts = (ids: Set<string>, done: boolean) =>
-    setBooks((all) =>
-      all.map((b) => ({ ...b, units: b.units.map((u) => ({ ...u, parts: u.parts.map((p) => (ids.has(p.id) ? { ...p, done } : p)) })) })),
-    )
+  const setParts = (ids: Set<string>, done: boolean) => run(() => actions.setPartsDone([...ids], done))
 
   const list = (
     <div className="divide-y divide-line overflow-hidden rounded-lg bg-surface shadow-panel">
@@ -69,8 +69,11 @@ export default function WorkbooksPage() {
         <Button size="sm" variant={selecting ? 'primary' : 'secondary'} onClick={() => { setSelecting(!selecting); setPicked(new Set()) }}>
           {selecting ? '선택 끝' : '여러 개 선택'}
         </Button>
-        <Button size="sm" icon={<Plus className="size-4" />}>
+        <Button size="sm" icon={<Plus className="size-4" />} onClick={() => setUnitOpen(true)}>
           중단원
+        </Button>
+        <Button size="sm" variant="ghost" className="text-danger" icon={<Trash2 className="size-4" />} onClick={() => setDeleteOpen(true)}>
+          삭제
         </Button>
       </div>
       {data.driveFiles.some((f) => f.links.some((l) => l.kind === 'workbook' && l.id === selected.id)) && (
@@ -145,9 +148,11 @@ export default function WorkbooksPage() {
       <p className="mt-3 flex items-center gap-1 text-xs text-muted">
         <Lock className="size-3" /> 표시된 Part는 할 일·시험 범위에 연결되어 있어 삭제할 수 없습니다.
       </p>
-      <div className="mt-3">
-        <PrototypeNotice>Part 체크는 화면에서만 바뀌며 저장되지 않습니다.</PrototypeNotice>
-      </div>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 
@@ -187,6 +192,21 @@ export default function WorkbooksPage() {
         </div>
       )}
       {createOpen && <WorkbookCreate onClose={() => setCreateOpen(false)} />}
+      {unitOpen && selected && <WorkbookCreate workbookId={selected.id} onClose={() => setUnitOpen(false)} />}
+      <ConfirmDialog
+        open={deleteOpen && !!selected}
+        onClose={() => setDeleteOpen(false)}
+        title="문제집을 휴지통으로 이동할까요?"
+        confirmLabel="휴지통으로 이동"
+        tone="danger"
+        onConfirm={async () => {
+          if (!selected) return
+          setDeleteOpen(false)
+          if (await run(() => actions.removeWorkbook(selected.id))) setSelectedId(null)
+        }}
+      >
+        <p>「{selected?.title}」을(를) 30일 휴지통으로 이동합니다. 이 문제집에 연결된 할 일·계획·공부 기록은 그대로 남습니다.</p>
+      </ConfirmDialog>
     </>
   )
 }

@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { BookOpen, CheckSquare, ChevronDown, ChevronRight, Link2, Plus } from 'lucide-react'
 import { useAppData } from '../../app/data-context'
+import { useRun } from '../../app/useRun'
 import { useNow } from '../../app/useNow'
 import { Badge, SubjectLabel, TagChips } from '../../components/ui/Badge'
 import { Button, IconButton } from '../../components/ui/Button'
 import { cn } from '../../components/ui/cn'
 import { CheckButton, Segmented } from '../../components/ui/Form'
-import { Card, EmptyState, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
+import { Card, EmptyState, PageHeader } from '../../components/ui/Layout'
 import { Modal } from '../../components/ui/Modal'
-import { partIndex, PRIORITY_LABEL, recomputeAutoComplete, setTodoDoneManually, sortTodos, todoOverdue, todoProgress } from '../../domain/logic'
+import { partIndex, PRIORITY_LABEL, sortTodos, todoOverdue, todoProgress } from '../../domain/logic'
 import { formatDay, studyDayOf } from '../../domain/time'
 import type { Todo } from '../../domain/types'
 import { TodoEditor } from './TodoEditor'
@@ -17,13 +18,9 @@ type Filter = 'all' | 'today' | 'overdue' | 'nodue'
 
 export default function TodosPage() {
   const now = useNow()
-  const { data, subject } = useAppData()
-  // UI 프로토타입: 체크 상태는 화면 안에서만 바뀐다
-  const [todos, setTodos] = useState<Todo[]>(data.todos)
-  const [partDone, setPartDone] = useState(() => {
-    const idx = partIndex(data.workbooks)
-    return new Set([...idx].filter(([, p]) => p.done).map(([id]) => id))
-  })
+  const { data, subject, actions } = useAppData()
+  const { run, error } = useRun()
+  const todos = data.todos
   const [filter, setFilter] = useState<Filter>('all')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [showDone, setShowDone] = useState(false) // 완료 항목 접힌 영역 (Q115)
@@ -32,27 +29,16 @@ export default function TodosPage() {
 
   const today = studyDayOf(now)
   const parts = partIndex(data.workbooks)
-  const isPartDone = (id: string) => partDone.has(id)
-
-  const update = (t: Todo) => setTodos((all) => all.map((x) => (x.id === t.id ? t : x)))
+  const isPartDone = (id: string) => parts.get(id)?.done ?? false
 
   const toggleParent = (t: Todo) => {
     if (!t.done && t.partIds.some((id) => !isPartDone(id))) return setPartConfirm(t) // Q33
-    update(setTodoDoneManually(t, !t.done))
+    run(() => actions.setTodoDone(t.id, !t.done))
   }
 
-  const toggleSub = (t: Todo, subId: string) => {
-    const next = { ...t, subtasks: t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s)) }
-    update(recomputeAutoComplete(next, isPartDone))
-  }
+  const toggleSub = (t: Todo, subId: string) => run(() => actions.toggleSubtask(t.id, subId))
 
-  const togglePart = (t: Todo, partId: string) => {
-    const nextSet = new Set(partDone)
-    if (nextSet.has(partId)) nextSet.delete(partId)
-    else nextSet.add(partId)
-    setPartDone(nextSet)
-    update(recomputeAutoComplete(t, (id) => nextSet.has(id)))
-  }
+  const togglePart = (partId: string) => run(() => actions.setPartsDone([partId], !isPartDone(partId)))
 
   const match = (t: Todo) =>
     filter === 'all' ||
@@ -123,7 +109,7 @@ export default function TodosPage() {
               const p = parts.get(pid)
               return (
                 <li key={pid} className="flex min-h-10 items-center gap-2">
-                  <CheckButton checked={isPartDone(pid)} onChange={() => togglePart(t, pid)} label={`${p?.label ?? 'Part'} 완료`} round />
+                  <CheckButton checked={isPartDone(pid)} onChange={() => togglePart(pid)} label={`${p?.label ?? 'Part'} 완료`} round />
                   <BookOpen className="size-3.5 shrink-0 text-faint" />
                   <span className="min-w-0 flex-1 truncate text-sm">
                     {p ? `${p.workbook} · ${p.unit} · ${p.label}` : '삭제된 Part'}
@@ -192,9 +178,11 @@ export default function TodosPage() {
           )}
         </div>
       )}
-      <div className="mt-4">
-        <PrototypeNotice>체크 상태와 자동 완료 규칙은 화면에서 시연되며 저장되지 않습니다.</PrototypeNotice>
-      </div>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
 
       {editor && <TodoEditor key={editor.todo?.id ?? 'new'} todo={editor.todo} onClose={() => setEditor(null)} />}
 
@@ -207,7 +195,7 @@ export default function TodosPage() {
           <>
             <Button
               onClick={() => {
-                if (partConfirm) update(setTodoDoneManually(partConfirm, true))
+                if (partConfirm) run(() => actions.setTodoDone(partConfirm.id, true, false))
                 setPartConfirm(null)
               }}
             >
@@ -216,10 +204,7 @@ export default function TodosPage() {
             <Button
               variant="primary"
               onClick={() => {
-                if (partConfirm) {
-                  setPartDone(new Set([...partDone, ...partConfirm.partIds]))
-                  update(setTodoDoneManually(partConfirm, true))
-                }
+                if (partConfirm) run(() => actions.setTodoDone(partConfirm.id, true, true))
                 setPartConfirm(null)
               }}
             >
