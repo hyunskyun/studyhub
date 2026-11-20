@@ -54,21 +54,21 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'relative flex max-h-[92svh] w-full flex-col rounded-t-3xl border border-line bg-surface shadow-xl md:rounded-3xl',
+          'relative flex max-h-[92svh] w-full flex-col rounded-t-xl bg-surface shadow-2xl md:rounded-lg',
           size === 'lg' ? 'md:max-w-2xl' : 'md:max-w-lg',
         )}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-line py-2 pr-2 pl-5">
-          <h2 id={titleId} className="truncate text-[17px] font-semibold">
+        <div className="flex items-center justify-between gap-2 border-b border-line py-1.5 pr-2 pl-5">
+          <h2 id={titleId} className="truncate text-base font-semibold">
             {title}
           </h2>
           <IconButton label="닫기" onClick={onClose} data-close>
-            <X className="size-5" />
+            <X className="size-4" />
           </IconButton>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex flex-wrap justify-end gap-2 border-t border-line px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex flex-wrap justify-end gap-2 border-t border-line bg-subtle px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:rounded-b-lg">
             {footer}
           </div>
         )}
@@ -110,7 +110,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div className="space-y-3 text-[15px] leading-relaxed">{children}</div>
+      <div className="space-y-3 text-sm leading-relaxed">{children}</div>
     </Modal>
   )
 }

@@ -90,7 +90,7 @@ export default function ArchivePage() {
             <Card padded={false}>
               <ul className="divide-y divide-line">
                 {data.archive.map((a) => (
-                  <li key={a.id} className="flex min-h-14 items-center gap-3 px-4 py-2 md:px-5">
+                  <li key={a.id} className="flex min-h-11 items-center gap-3 px-4 py-2 md:px-5">
                     <span className="min-w-0 flex-1 truncate">{a.title}</span>
                     <Badge>{KIND[a.kind]}</Badge>
                     <Badge tone="warning">{a.label}</Badge>
@@ -110,7 +110,7 @@ export default function ArchivePage() {
         <p>「{restore?.title}」을(를) 원래 위치로 복원합니다.</p>
         {restore?.kind === 'project' && <p className="text-sm text-muted">함께 삭제된 할 일·하위 항목과 연결 관계도 함께 복원됩니다.</p>}
         {restore?.kind === 'block' && (
-          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">복원할 시간에 다른 학습 계획이 있으면 먼저 날짜·시간을 바꿔야 복원할 수 있습니다.</p>
+          <p className="rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">복원할 시간에 다른 학습 계획이 있으면 먼저 날짜·시간을 바꿔야 복원할 수 있습니다.</p>
         )}
         <PrototypeNotice />
       </ConfirmDialog>

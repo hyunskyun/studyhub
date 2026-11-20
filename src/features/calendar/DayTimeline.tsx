@@ -93,7 +93,7 @@ export function DayTimeline({
   const nowTop = nowMs >= studyDayStartMs(day) && nowMs < studyDayStartMs(day) + 86_400_000 ? top(new Date(nowMs).toISOString()) : null
 
   return (
-    <div className="relative overflow-clip rounded-2xl border border-line bg-surface">
+    <div className="relative overflow-clip rounded-lg bg-surface shadow-panel">
       <div className="sticky top-0 z-10 grid grid-cols-[52px_1fr_1fr] border-b border-line bg-surface text-xs font-medium text-muted">
         <span />
         <span className="border-l border-line px-2 py-2">일정·수업</span>
@@ -123,7 +123,7 @@ export function DayTimeline({
               type="button"
               onClick={() => onOpenEvent(it)}
               className={cn(
-                'pointer-events-auto absolute overflow-hidden rounded-lg border border-line bg-subtle px-2 py-1 text-left text-xs',
+                'pointer-events-auto absolute overflow-hidden rounded bg-subtle px-2 py-1 text-left text-xs shadow-[inset_0_0_0_1px_var(--line)]',
                 it.cancelled && 'opacity-50',
               )}
               style={{
@@ -153,7 +153,7 @@ export function DayTimeline({
               <div
                 key={b.id}
                 className={cn(
-                  'pointer-events-auto absolute inset-x-1 overflow-hidden rounded-lg border-l-4 text-xs shadow-sm',
+                  'pointer-events-auto absolute inset-x-1 overflow-hidden rounded border-l-[3px] text-xs',
                   bad ? 'bg-danger-soft ring-2 ring-danger' : 'bg-accent-soft',
                   draft?.id === b.id && 'opacity-90 shadow-lg',
                 )}
@@ -173,7 +173,7 @@ export function DayTimeline({
                   onPointerMove={moveDrag}
                   onPointerUp={endDrag}
                   onPointerCancel={endDrag}
-                  className="absolute top-0 right-0 flex h-full max-h-11 w-9 cursor-grab touch-none items-center justify-center text-muted"
+                  className="absolute top-0 right-0 flex h-full max-h-9 w-9 cursor-grab touch-none items-center justify-center text-muted"
                 >
                   <GripVertical className="size-4" />
                 </span>

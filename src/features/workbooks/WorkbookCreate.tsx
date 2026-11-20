@@ -55,14 +55,14 @@ export function WorkbookCreate({ onClose }: { onClose: () => void }) {
               {(id, d) => <TextArea id={id} aria-describedby={d} rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'1. 함수의 극한 6\n2. 수열의 극한 8\n3. 미분법 10'} />}
             </Field>
             {errors.length > 0 && (
-              <ul role="alert" className="space-y-0.5 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">
+              <ul role="alert" className="space-y-0.5 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
                 {errors.map((e) => (
                   <li key={e.line}>{'error' in e && e.error}</li>
                 ))}
               </ul>
             )}
             {ok.length > 0 && (
-              <div className="rounded-xl border border-line p-3">
+              <div className="border-t border-line pt-3">
                 <p className="mb-2 text-sm font-medium">
                   미리보기 · 중단원 {ok.length}개, Part {ok.reduce((s, r) => s + r.count, 0)}개
                 </p>

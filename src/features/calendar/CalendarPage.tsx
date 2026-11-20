@@ -118,7 +118,7 @@ export default function CalendarPage() {
           </div>
         </>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid gap-px overflow-hidden rounded-lg bg-line shadow-panel sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {week.map((d) => {
             const items = [
               ...blocks
@@ -134,7 +134,7 @@ export default function CalendarPage() {
                   setDay(d)
                   setView('day')
                 }}
-                className={`min-h-28 rounded-2xl border bg-surface p-3 text-left ${d === today ? 'border-accent' : 'border-line'}`}
+                className={`min-h-24 bg-surface p-3 text-left hover:bg-subtle ${d === today ? 'shadow-[inset_0_2px_0_var(--accent)]' : ''}`}
               >
                 <p className={`mb-2 text-sm font-semibold ${d === today ? 'text-accent' : ''}`}>
                   {weekdayLabel(d)} {formatShortDay(d)}
@@ -155,7 +155,7 @@ export default function CalendarPage() {
               </button>
             )
           })}
-          <p className="text-xs text-muted sm:col-span-2 lg:col-span-4 xl:col-span-7">주간 보기에는 학교 정규 수업을 생략합니다. 날짜를 누르면 일간 보기로 이동합니다.</p>
+          <p className="bg-surface px-3 py-2 text-xs text-muted sm:col-span-2 lg:col-span-4 xl:col-span-7">주간 보기에는 학교 정규 수업을 생략합니다. 날짜를 누르면 일간 보기로 이동합니다.</p>
         </div>
       )}
 

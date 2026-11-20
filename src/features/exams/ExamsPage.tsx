@@ -90,7 +90,7 @@ function MockTab() {
             <ul className="-mx-2">
               {e.attempts.map((a) => (
                 <li key={a.id}>
-                  <button type="button" onClick={() => setOpen({ exam: e, attempt: a })} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left hover:bg-subtle">
+                  <button type="button" onClick={() => setOpen({ exam: e, attempt: a })} className="flex min-h-10 w-full items-center gap-3 rounded-md px-2 text-left hover:bg-subtle">
                     <span className="w-14 text-sm font-semibold">{a.attemptNo === 1 ? '첫 응시' : `${a.attemptNo}회차`}</span>
                     <span className="tabular flex-1 truncate text-sm">
                       {(Object.keys(METRIC_LABEL) as Metric[])
@@ -173,7 +173,7 @@ function SchoolTab() {
       <Card title="지난 시험" padded={false}>
         <ul className="divide-y divide-line">
           {past.map((e) => (
-            <li key={e.id} className="flex min-h-12 items-center gap-3 px-4 md:px-5">
+            <li key={e.id} className="flex min-h-10 items-center gap-3 px-4 md:px-5">
               <span className="w-32 shrink-0 text-sm text-muted">
                 {e.year} {e.semester}학기 {e.term === 'midterm' ? '중간' : '기말'}
               </span>

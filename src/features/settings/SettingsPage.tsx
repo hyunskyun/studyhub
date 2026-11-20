@@ -43,7 +43,7 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="화면 테마">
-          <div role="radiogroup" aria-label="화면 테마" className="grid grid-cols-3 gap-2">
+          <div role="radiogroup" aria-label="화면 테마" className="inline-flex overflow-hidden rounded-md bg-surface shadow-control">
             {THEMES.map((t) => {
               const Icon = t.icon
               return (
@@ -54,11 +54,11 @@ export default function SettingsPage() {
                   aria-checked={pref === t.value}
                   onClick={() => setPref(t.value)}
                   className={cn(
-                    'flex h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border text-sm font-medium transition-colors',
-                    pref === t.value ? 'border-accent bg-accent-soft text-accent' : 'border-line hover:bg-subtle',
+                    'flex h-9 items-center gap-1.5 border-l border-line px-3.5 text-sm transition-colors first:border-l-0',
+                    pref === t.value ? 'bg-accent-soft font-medium text-accent' : 'text-muted hover:bg-subtle hover:text-fg',
                   )}
                 >
-                  <Icon className="size-5" />
+                  <Icon className="size-3.5" />
                   {t.label}
                 </button>
               )
@@ -92,9 +92,9 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="오답 원인 분류">
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
             {data.errorCauses.map((c) => (
-              <li key={c.id} className={cn('rounded-full border border-line px-3 py-1.5 text-sm', !c.active && 'text-faint line-through')}>
+              <li key={c.id} className={cn('', !c.active && 'text-faint line-through')}>
                 {c.name}
               </li>
             ))}

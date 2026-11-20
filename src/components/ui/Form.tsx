@@ -3,7 +3,7 @@ import { Check, Minus } from 'lucide-react'
 import { cn } from './cn'
 
 const CONTROL =
-  'w-full rounded-xl border bg-surface px-3 text-[15px] text-fg placeholder:text-faint outline-none transition-colors focus:border-accent'
+  'w-full rounded-md border bg-surface px-2.5 text-sm text-fg shadow-[0_1px_1px_rgb(0_0_0/0.03)] placeholder:text-faint outline-none transition-colors focus:border-accent focus:ring-3 focus:ring-accent/15'
 
 export function Field({
   label,
@@ -23,8 +23,8 @@ export function Field({
   const id = useId()
   const msgId = `${id}-msg`
   return (
-    <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-sm font-medium">
+    <div className={cn('flex min-w-0 flex-col gap-1', className)}>
+      <label htmlFor={id} className="text-sm font-medium text-fg">
         {label}
         {required && <span className="ml-0.5 text-danger">*</span>}
       </label>
@@ -46,7 +46,7 @@ export function TextInput({ invalid, className, ...rest }: InputHTMLAttributes<H
   return (
     <input
       aria-invalid={invalid || undefined}
-      className={cn(CONTROL, 'h-11', invalid ? 'border-danger' : 'border-line', className)}
+      className={cn(CONTROL, 'h-9', invalid ? 'border-danger' : 'border-line', className)}
       {...rest}
     />
   )
@@ -56,7 +56,7 @@ export function TextArea({ invalid, className, ...rest }: TextareaHTMLAttributes
   return (
     <textarea
       aria-invalid={invalid || undefined}
-      className={cn(CONTROL, 'min-h-24 py-2.5', invalid ? 'border-danger' : 'border-line', className)}
+      className={cn(CONTROL, 'min-h-20 py-2', invalid ? 'border-danger' : 'border-line', className)}
       {...rest}
     />
   )
@@ -66,7 +66,7 @@ export function Select({ invalid, className, children, ...rest }: SelectHTMLAttr
   return (
     <select
       aria-invalid={invalid || undefined}
-      className={cn(CONTROL, 'h-11 appearance-auto', invalid ? 'border-danger' : 'border-line', className)}
+      className={cn(CONTROL, 'h-9 appearance-auto', invalid ? 'border-danger' : 'border-line', className)}
       {...rest}
     >
       {children}
@@ -74,7 +74,7 @@ export function Select({ invalid, className, children, ...rest }: SelectHTMLAttr
   )
 }
 
-/** 큰 터치 영역의 체크 버튼 (44px). indeterminate = 부분 완료 */
+/** 체크 버튼: 보이는 크기 18px, 터치 영역 36px. indeterminate = 부분 완료 */
 export function CheckButton({
   checked,
   indeterminate,
@@ -98,16 +98,16 @@ export function CheckButton({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="group -m-2 inline-flex size-11 shrink-0 items-center justify-center disabled:opacity-40"
+      className="group -m-[9px] inline-flex size-9 shrink-0 items-center justify-center disabled:opacity-40"
     >
       <span
         className={cn(
-          'flex size-6 items-center justify-center border-2 transition-colors',
-          round ? 'rounded-full' : 'rounded-md',
-          checked ? 'border-accent bg-accent text-accent-fg' : indeterminate ? 'border-accent text-accent' : 'border-line group-hover:border-faint',
+          'flex size-[18px] items-center justify-center border-[1.5px] transition-colors',
+          round ? 'rounded-full' : 'rounded-[5px]',
+          checked ? 'border-accent bg-accent text-accent-fg' : indeterminate ? 'border-accent text-accent' : 'border-faint/70 bg-surface group-hover:border-muted',
         )}
       >
-        {checked ? <Check className="size-4" strokeWidth={3} /> : indeterminate ? <Minus className="size-4" strokeWidth={3} /> : null}
+        {checked ? <Check className="size-3" strokeWidth={3.5} /> : indeterminate ? <Minus className="size-3" strokeWidth={3.5} /> : null}
       </span>
     </button>
   )
@@ -115,9 +115,9 @@ export function CheckButton({
 
 export function Toggle({ checked, onChange, label, description }: { checked: boolean; onChange: (v: boolean) => void; label: string; description?: string }) {
   return (
-    <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+    <label className="flex min-h-9 cursor-pointer items-center justify-between gap-4">
       <span className="min-w-0">
-        <span className="block text-[15px]">{label}</span>
+        <span className="block text-sm">{label}</span>
         {description && <span className="block text-xs text-muted">{description}</span>}
       </span>
       <button
@@ -126,9 +126,9 @@ export function Toggle({ checked, onChange, label, description }: { checked: boo
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-line')}
+        className={cn('relative h-5 w-9 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-line')}
       >
-        <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5.5' : 'translate-x-0.5')} />
+        <span className={cn('absolute top-0.5 left-0 size-4 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-4.5' : 'translate-x-0.5')} />
       </button>
     </label>
   )
@@ -148,7 +148,7 @@ export function Segmented<T extends string>({
   className?: string
 }) {
   return (
-    <div role="tablist" aria-label={label} className={cn('inline-flex max-w-full overflow-x-auto rounded-xl bg-subtle p-1', className)}>
+    <div role="tablist" aria-label={label} className={cn('inline-flex max-w-full overflow-x-auto rounded-md bg-surface shadow-control', className)}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -157,8 +157,8 @@ export function Segmented<T extends string>({
           aria-selected={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'h-9 shrink-0 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors',
-            value === o.value ? 'bg-surface text-fg shadow-sm' : 'text-muted hover:text-fg',
+            'h-8 shrink-0 border-l border-line px-3 text-sm whitespace-nowrap transition-colors first:border-l-0',
+            value === o.value ? 'bg-accent-soft font-medium text-accent' : 'text-muted hover:bg-subtle hover:text-fg',
           )}
         >
           {o.label}
@@ -176,8 +176,8 @@ export function ChipToggle({ selected, onClick, children }: { selected: boolean;
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors',
-        selected ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:text-fg',
+        'h-8 rounded-md px-3 text-sm transition-colors',
+        selected ? 'bg-accent-soft font-medium text-accent shadow-[inset_0_0_0_1px_var(--accent)]' : 'bg-surface text-muted shadow-control hover:text-fg',
       )}
     >
       {children}

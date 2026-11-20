@@ -37,7 +37,7 @@ export default function SearchPage() {
     <>
       <PageHeader title="검색" />
       <div className="relative mb-3">
-        <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-faint" />
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-faint" />
         <input
           type="search"
           autoFocus
@@ -45,7 +45,7 @@ export default function SearchPage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="할 일·문제집·프로젝트·시험·파일 이름"
           aria-label="이름 검색"
-          className="h-13 w-full rounded-2xl border border-line bg-surface pr-4 pl-12 text-base outline-none focus:border-accent"
+          className="h-10 w-full rounded-md bg-surface pr-4 pl-10 text-sm shadow-control outline-none focus:ring-3 focus:ring-accent/20"
         />
       </div>
       <div className="mb-4 max-w-sm">
@@ -62,7 +62,7 @@ export default function SearchPage() {
               const Icon = h.icon
               return (
                 <li key={`${h.kind}-${h.id}`}>
-                  <a href={href(h.to)} className="flex min-h-14 items-center gap-3 px-4 py-2 hover:bg-subtle md:px-5">
+                  <a href={href(h.to)} className="flex min-h-11 items-center gap-3 px-4 py-2 hover:bg-subtle md:px-5">
                     <Icon className="size-5 shrink-0 text-muted" />
                     <span className="min-w-0 flex-1 truncate">{h.title}</span>
                     {h.archived && <Badge tone="warning">보관</Badge>}
