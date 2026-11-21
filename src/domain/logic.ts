@@ -1,6 +1,8 @@
 // 화면에서 공통으로 쓰는 파생 계산 (순수 함수)
 import {
+  addDays,
   dDay,
+  mondayOf,
   isOverdue,
   minutesBetween,
   overlaps,
@@ -10,6 +12,7 @@ import {
 import type {
   AcademyClass,
   AppData,
+  Goal,
   MockAttempt,
   Priority,
   SchoolExam,
@@ -110,7 +113,7 @@ export function studyMinutesByDay(sessions: StudySession[]): Record<DateStr, num
 export function academyMinutesByDay(classes: AcademyClass[]): Record<DateStr, number> {
   const out: Record<DateStr, number> = {}
   for (const c of classes) {
-    if (c.status !== 'attended' && c.status !== 'makeup') continue
+    if (c.status !== 'attended') continue
     for (const [day, min] of Object.entries(splitMinutesByStudyDay(c.start, c.end)))
       out[day] = (out[day] ?? 0) + min
   }
@@ -165,4 +168,33 @@ export function upcomingDeadlines(data: AppData, now: number, subjectName: (id: 
     if (!p.submitted)
       items.push({ id: p.id, kind: 'project', title: p.title, date: p.due.date, dday: dDay(p.due.date, now) })
   return items.filter((i) => i.dday >= 0).sort((a, b) => a.dday - b.dday)
+}
+
+/** 목표 기간에 속한 학습일 목록 */
+export function goalDays(period: Goal['period'], today: DateStr): DateStr[] {
+  if (period === 'day') return [today]
+  if (period === 'week') return Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i))
+  const first = `${today.slice(0, 7)}-01`
+  const days: DateStr[] = []
+  for (let d = first; d.slice(0, 7) === first.slice(0, 7); d = addDays(d, 1)) days.push(d)
+  return days
+}
+
+/**
+ * 목표 달성 값. 시간 목표는 자습만 (Q70), 과목 목표는 세부 과목 포함, 전체·과목 목표는 독립 (Q110, Q117).
+ * 수량 목표는 완료 학습일 메타데이터로 집계 (Q12).
+ */
+export function goalValue(goal: Goal, data: AppData, today: DateStr): number {
+  const days = new Set(goalDays(goal.period, today))
+  const inSubject = (id?: string) =>
+    !goal.subjectId || id === goal.subjectId || data.subjects.find((s) => s.id === id)?.parentId === goal.subjectId
+  if (goal.metric === 'minutes') {
+    const byDay = studyMinutesByDay(data.sessions.filter((s) => inSubject(s.subjectId)))
+    return [...days].reduce((sum, d) => sum + (byDay[d] ?? 0), 0)
+  }
+  if (goal.metric === 'todos') return data.todos.filter((t) => t.done && t.completedDay && days.has(t.completedDay) && inSubject(t.subjectId)).length
+  return data.workbooks
+    .filter((w) => inSubject(w.subjectId))
+    .flatMap((w) => w.units.flatMap((u) => u.parts))
+    .filter((p) => p.done && p.doneDay && days.has(p.doneDay)).length
 }

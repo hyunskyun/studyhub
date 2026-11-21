@@ -68,12 +68,18 @@ export interface Todo {
   subtasks: Subtask[]
   partIds: ID[]
   projectStepId?: ID
+  /** 완료된 학습일 (일간 완료 수 목표 집계 전용, 화면에 표시하지 않음: Q12·Q58) */
+  completedDay?: DateStr
+  /** 수행평가와 함께 휴지통으로 간 경우 그 프로젝트 ID (함께 복원: Q135) */
+  deletedWithProject?: ID
 }
 
 export interface Part {
   id: ID
   label: string
   done: boolean
+  /** 완료된 학습일 (Part 수 목표 집계 전용) */
+  doneDay?: DateStr
 }
 
 export interface WorkbookUnit {
@@ -223,15 +229,20 @@ export interface AcademyClass {
   id: ID
   courseId: ID
   date: DateStr
+  /** 출석 기록 시 실제 시각으로 수정 가능 (Q42, Q107) */
   start: string
   end: string
   status: ClassStatus
+  /** 보강 수업 */
+  makeup?: boolean
 }
 
 export interface HomeworkItem {
   id: ID
   title: string
   done: boolean
+  /** 템플릿의 몇 번째 줄에서 왔는지 (템플릿 변경 반영용) */
+  templateIndex?: number
   /** 사용자가 이 주차에서 직접 수정한 필드는 템플릿 변경에도 보존 (Q134) */
   overridden?: boolean
 }
@@ -242,6 +253,9 @@ export interface HomeworkWeek {
   weekOf: DateStr
   due: DateStr
   items: HomeworkItem[]
+  /** 강좌 삭제 후에도 표시할 과거 이름 (Q136) */
+  courseTitle?: string
+  academyName?: string
 }
 
 export type GoalPeriod = 'day' | 'week' | 'month'
@@ -299,6 +313,10 @@ export interface TrashItem {
   deletedAt: string
   /** 함께 이동된 연결 항목 수 (예: 하위 할 일) */
   relatedCount?: number
+  /** 원본 문서 (복원 시 연결 관계 확인용) */
+  raw?: Record<string, unknown>
+  /** 다른 항목(수행평가)과 함께 삭제되어 그 항목 아래에 묶여 표시됨 */
+  groupedUnder?: string
 }
 
 export interface ArchiveItem {

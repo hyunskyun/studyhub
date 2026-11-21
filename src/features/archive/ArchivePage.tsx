@@ -34,6 +34,8 @@ export default function ArchivePage() {
   const [restore, setRestore] = useState<TrashItem | null>(null)
   const [purge, setPurge] = useState<TrashItem | null>(null)
 
+  // 수행평가와 함께 삭제된 할 일은 그 수행평가 항목 아래에 묶어 표시
+  const trash = data.trash.filter((t) => !t.groupedUnder)
   const daysLeft = (t: TrashItem) => Math.max(0, RETENTION_DAYS - Math.floor((now - Date.parse(t.deletedAt)) / 86_400_000))
 
   return (
@@ -45,7 +47,7 @@ export default function ArchivePage() {
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'trash', label: `휴지통 ${data.trash.length || ''}`.trim() },
+          { value: 'trash', label: `휴지통 ${trash.length || ''}`.trim() },
           { value: 'archive', label: '보관함' },
         ]}
       />
@@ -58,14 +60,14 @@ export default function ArchivePage() {
       {tab === 'trash' ? (
         <>
           <p className="mb-3 text-sm text-muted">삭제한 항목은 30일 동안 보관된 뒤 영구 삭제됩니다. Google Drive 원본 파일은 휴지통 대상이 아닙니다.</p>
-          {data.trash.length === 0 ? (
+          {trash.length === 0 ? (
             <Card>
               <EmptyState icon={<Trash2 className="size-6" />} title="휴지통이 비어 있습니다" />
             </Card>
           ) : (
             <Card padded={false}>
               <ul className="divide-y divide-line">
-                {data.trash.map((t) => (
+                {trash.map((t) => (
                   <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 md:px-5">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{t.title}</span>

@@ -8,9 +8,10 @@ import { Button } from '../../components/ui/Button'
 import { percentLabel } from '../../components/ui/cn'
 import { Segmented, Select } from '../../components/ui/Form'
 import { Card, EmptyState, PageHeader, ProgressBar, Stat } from '../../components/ui/Layout'
-import { academyMinutesByDay, sessionStudyMinutes, studyMinutesByDay, workbookProgress } from '../../domain/logic'
-import { addDays, formatMinutes, formatShortDay, minutesBetween, mondayOf, studyDayOf } from '../../domain/time'
+import { academyMinutesByDay, goalValue, sessionStudyMinutes, studyMinutesByDay, workbookProgress } from '../../domain/logic'
+import { addDays, formatMinutes, formatShortDay, minutesBetween, studyDayOf } from '../../domain/time'
 import type { ExamTag, Goal } from '../../domain/types'
+import { GoalEditor } from './GoalEditor'
 
 type Range = 'week' | 'month'
 type Source = 'self' | 'academy' | 'all'
@@ -25,6 +26,7 @@ export default function StatsPage() {
   const [source, setSource] = useState<Source>('all')
   const [tag, setTag] = useState<TagFilter>('all')
   const [subjectId, setSubjectId] = useState('')
+  const [goalEditor, setGoalEditor] = useState<{ goal: Goal | null } | null>(null)
 
   const today = studyDayOf(now)
   const len = range === 'week' ? 7 : 30
@@ -52,14 +54,6 @@ export default function StatsPage() {
   const subjectRows = [...bySubject].sort((a, b) => b[1] - a[1])
   const maxSub = Math.max(1, ...subjectRows.map(([, m]) => m))
 
-  // 시간 목표 = 자습만 (Q70). 수량 목표 집계는 2단계(완료 학습일 메타데이터) 이후.
-  const allSelf = studyMinutesByDay(data.sessions)
-  const goalValue = (g: Goal): number | undefined => {
-    if (g.metric !== 'minutes') return undefined
-    const src = g.subjectId ? studyMinutesByDay(data.sessions.filter((s) => s.subjectId === g.subjectId)) : allSelf
-    const span = g.period === 'day' ? [today] : g.period === 'week' ? Array.from({ length: 7 }, (_, i) => addDays(mondayOf(today), i)) : days
-    return span.reduce((s, d) => s + (src[d] ?? 0), 0)
-  }
 
   const causeCount = new Map<string, number>()
   for (const e of data.mockExams) for (const a of e.attempts.filter((x) => x.attemptNo === 1)) for (const w of a.wrong) causeCount.set(w.causeId, (causeCount.get(w.causeId) ?? 0) + 1)
@@ -69,7 +63,14 @@ export default function StatsPage() {
 
   return (
     <>
-      <PageHeader title="목표·통계" actions={<Button variant="primary" icon={<Plus className="size-4" />}>목표 추가</Button>} />
+      <PageHeader
+        title="목표·통계"
+        actions={
+          <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setGoalEditor({ goal: null })}>
+            목표 추가
+          </Button>
+        }
+      />
 
       <Card title="목표" className="mb-4">
         {data.goals.length === 0 ? (
@@ -77,10 +78,10 @@ export default function StatsPage() {
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {data.goals.map((g) => {
-              const v = goalValue(g)
+              const v = goalValue(g, data, today)
               const label = g.metric === 'minutes' ? `자습 ${formatMinutes(g.target)}` : g.metric === 'parts' ? `Part ${g.target}개` : `할 일 ${g.target}개`
               return (
-                <li key={g.id}>
+                <li key={g.id} className="-mx-2 cursor-pointer rounded-md px-2 py-1 hover:bg-subtle" onClick={() => setGoalEditor({ goal: g })}>
                   <div className="mb-1 flex items-center justify-between gap-2 text-sm">
                     <span className="flex min-w-0 items-center gap-1.5">
                       <span className="text-muted">{PERIOD_LABEL[g.period]}</span>
@@ -92,17 +93,18 @@ export default function StatsPage() {
                       )}
                       <span className="truncate">{label}</span>
                     </span>
-                    <span className="tabular shrink-0 font-semibold">{v === undefined ? '–' : percentLabel(v, g.target)}</span>
+                    <span className="tabular shrink-0 font-semibold">{percentLabel(v, g.target)}</span>
                   </div>
-                  <ProgressBar value={v ?? 0} max={g.target} tone={v !== undefined && v >= g.target ? 'success' : 'accent'} />
-                  <p className="mt-1 text-xs text-muted">{v === undefined ? '수량 목표 집계는 로컬 DB 연결 후 표시됩니다.' : `${formatMinutes(v)} / ${formatMinutes(g.target)}`}</p>
+                  <ProgressBar value={v} max={g.target} tone={v >= g.target ? 'success' : 'accent'} />
+                  <p className="mt-1 text-xs text-muted">{g.metric === 'minutes' ? `${formatMinutes(v)} / ${formatMinutes(g.target)}` : `${v} / ${g.target}개`}</p>
                 </li>
               )
             })}
           </ul>
         )}
-        <p className="mt-4 text-xs text-muted">시간 목표에는 자습만 반영됩니다. 학원 수업 시간은 아래 통계에서 따로 볼 수 있습니다.</p>
+        <p className="mt-4 text-xs text-muted">시간 목표에는 자습만 반영됩니다. 학원 수업 시간은 아래 통계에서 따로 볼 수 있습니다. 100%를 넘으면 그대로 표시합니다.</p>
       </Card>
+      {goalEditor && <GoalEditor key={goalEditor.goal?.id ?? 'new'} goal={goalEditor.goal} onClose={() => setGoalEditor(null)} />}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Segmented label="기간" value={range} onChange={setRange} options={[{ value: 'week', label: '최근 7일' }, { value: 'month', label: '최근 30일' }]} />

@@ -7,6 +7,7 @@ import { cn } from '../../components/ui/cn'
 import { Toggle } from '../../components/ui/Form'
 import { Card, PageHeader, PrototypeNotice } from '../../components/ui/Layout'
 import { ConfirmDialog } from '../../components/ui/Modal'
+import { ErrorCausesCard } from './ErrorCausesCard'
 import { SubjectsCard } from './SubjectsCard'
 
 const THEMES: { value: ThemePref; label: string; icon: typeof Sun }[] = [
@@ -17,7 +18,7 @@ const THEMES: { value: ThemePref; label: string; icon: typeof Sun }[] = [
 
 export default function SettingsPage() {
   const { pref, setPref } = useTheme()
-  const { data, mode, setFixture, setAccessKey } = useAppData()
+  const { mode, setFixture, setAccessKey } = useAppData()
   const [restoreOpen, setRestoreOpen] = useState(false)
   const [forgetOpen, setForgetOpen] = useState(false)
 
@@ -69,16 +70,7 @@ export default function SettingsPage() {
 
         <SubjectsCard />
 
-        <Card title="오답 원인 분류">
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            {data.errorCauses.map((c) => (
-              <li key={c.id} className={cn('', !c.active && 'text-faint line-through')}>
-                {c.name}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-muted">기본 분류를 제공하며 추가·이름 변경·비활성화할 수 있습니다.</p>
-        </Card>
+        <ErrorCausesCard />
 
         <Card title="백업·복원">
           <div className="space-y-3">

@@ -1,5 +1,6 @@
 // 하루 일정 합성: 학습 계획 블록 + 캘린더 일정 + 학원 수업 + 학교 시간표
 import { addDays, daysBetween, kstDateTime, studyDayOf, studyDayStartMs, weekdayOf, type DateStr } from '../../domain/time'
+import { courseOccurrences } from '../../domain/academy'
 import type { AppData } from '../../domain/types'
 
 export type AgendaKind = 'plan' | 'school' | 'academy' | 'personal'
@@ -58,8 +59,7 @@ export function agendaForDay(data: AppData, day: DateStr, subjectName: (id?: str
     })
   }
 
-  for (const c of data.classes) {
-    if (c.date !== day) continue
+  for (const c of courseOccurrences(data.courses, data.classes, day, day)) {
     const course = data.courses.find((x) => x.id === c.courseId)
     items.push({
       id: c.id,
@@ -68,7 +68,7 @@ export function agendaForDay(data: AppData, day: DateStr, subjectName: (id?: str
       start: c.start,
       end: c.end,
       subjectId: course?.subjectId,
-      note: c.status === 'makeup' ? '보강' : c.status === 'cancelled' ? '휴강' : undefined,
+      note: c.makeup || c.status === 'makeup' ? '보강' : c.status === 'cancelled' ? '휴강' : c.status === 'attended' ? '출석' : undefined,
       cancelled: c.status === 'cancelled',
     })
   }

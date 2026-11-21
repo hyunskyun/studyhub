@@ -1,14 +1,13 @@
 // 화면에서 호출하는 저장 동작. 도메인 규칙을 적용한 변경 묶음(Batch)을 만들어 저장소에 보낸다.
 // 서버도 시간 중복 규칙을 다시 검사한다(이중 검증).
-import type { Batch, Collection, RecordDoc } from '../domain/collections'
+import type { Batch, Collection } from '../domain/collections'
 import { findSessionConflicts, partIndex, recomputeAutoComplete, setTodoDoneManually } from '../domain/logic'
-import type { DateStr, Due } from '../domain/time'
+import { studyDayOf, type DateStr, type Due } from '../domain/time'
 import type { ActiveTimer, ActivityRef, AppData, CalendarEvent, ExamTag, Priority, StudySession, TimeBlock, Todo, Workbook } from '../domain/types'
 import { deviceId, deviceName } from '../platform/device'
+import { put, stampTodo, stepSyncPuts, uuid } from './batch'
+import { schoolActions } from './schoolActions'
 import { StoreError, type Store } from './store'
-
-const uuid = () => crypto.randomUUID()
-const put = <T extends { id: string }>(c: Collection, data: T) => ({ c, data: data as unknown as RecordDoc })
 
 export interface TodoInput {
   title: string
@@ -39,13 +38,19 @@ export function createActions(store: Store, get: () => AppData, refresh: () => P
   function partChanges(workbooks: Workbook[], ids: Set<string>, done: boolean, todosOverride: Todo[] = get().todos) {
     const changedBooks = workbooks
       .filter((w) => w.units.some((u) => u.parts.some((p) => ids.has(p.id) && p.done !== done)))
-      .map((w) => ({ ...w, units: w.units.map((u) => ({ ...u, parts: u.parts.map((p) => (ids.has(p.id) ? { ...p, done } : p)) })) }))
+      .map((w) => ({
+        ...w,
+        units: w.units.map((u) => ({
+          ...u,
+          parts: u.parts.map((p) => (ids.has(p.id) && p.done !== done ? { ...p, done, doneDay: done ? studyDayOf(Date.now()) : undefined } : p)),
+        })),
+      }))
     const nextBooks = workbooks.map((w) => changedBooks.find((x) => x.id === w.id) ?? w)
     const idx = partIndex(nextBooks)
     const isDone = (id: string) => idx.get(id)?.done ?? false
     const changedTodos = todosOverride
       .filter((t) => t.partIds.some((p) => ids.has(p)))
-      .map((t) => recomputeAutoComplete(t, isDone))
+      .map((t) => stampTodo(t, recomputeAutoComplete(t, isDone)))
     return { changedBooks, changedTodos, isDone }
   }
 
@@ -71,6 +76,7 @@ export function createActions(store: Store, get: () => AppData, refresh: () => P
   }
 
   return {
+    ...schoolActions({ run, get }),
     // ───── 과목 ─────
     addSubject(name: string, parentId?: string) {
       const d = get()
@@ -113,31 +119,31 @@ export function createActions(store: Store, get: () => AppData, refresh: () => P
         projectStepId: prev?.projectStepId,
       }
       const idx = partIndex(get().workbooks)
-      todo = recomputeAutoComplete(todo, (p) => idx.get(p)?.done ?? false)
-      return run({ put: [put('todos', todo)] })
+      todo = stampTodo(prev, recomputeAutoComplete(todo, (p) => idx.get(p)?.done ?? false))
+      return run({ put: [put('todos', todo), ...stepSyncPuts(get().projects, [todo])] })
     },
     /** 상위 직접 체크/취소 (Q62, Q67). includeParts=true면 남은 연결 Part도 완료 (Q33) */
     setTodoDone(id: string, done: boolean, includeParts = false) {
       const d = get()
       const t = d.todos.find((x) => x.id === id)
       if (!t) return Promise.resolve()
-      const next = setTodoDoneManually(t, done)
-      if (!includeParts || !done) return run({ put: [put('todos', next)] })
+      const next = stampTodo(t, setTodoDoneManually(t, done))
+      if (!includeParts || !done) return run({ put: [put('todos', next), ...stepSyncPuts(d.projects, [next])] })
       const others = d.todos.map((x) => (x.id === id ? next : x))
       const { changedBooks, changedTodos } = partChanges(d.workbooks, new Set(t.partIds), true, others)
       const todos = [next, ...changedTodos.filter((x) => x.id !== id)]
-      return run({ put: [...changedBooks.map((w) => put('workbooks', w)), ...todos.map((x) => put('todos', x))] })
+      return run({ put: [...changedBooks.map((w) => put('workbooks', w)), ...todos.map((x) => put('todos', x)), ...stepSyncPuts(d.projects, todos)] })
     },
     toggleSubtask(todoId: string, subId: string) {
       const d = get()
       const t = d.todos.find((x) => x.id === todoId)
       if (!t) return Promise.resolve()
       const idx = partIndex(d.workbooks)
-      const next = recomputeAutoComplete(
-        { ...t, subtasks: t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s)) },
-        (p) => idx.get(p)?.done ?? false,
+      const next = stampTodo(
+        t,
+        recomputeAutoComplete({ ...t, subtasks: t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s)) }, (p) => idx.get(p)?.done ?? false),
       )
-      return run({ put: [put('todos', next)] })
+      return run({ put: [put('todos', next), ...stepSyncPuts(d.projects, [next])] })
     },
     /** 상위 삭제 시 하위 항목도 함께 휴지통 (Q121). 연결 Part는 삭제하지 않음 */
     removeTodo(id: string) {
@@ -169,7 +175,9 @@ export function createActions(store: Store, get: () => AppData, refresh: () => P
     setPartsDone(partIds: string[], done: boolean) {
       const { changedBooks, changedTodos } = partChanges(get().workbooks, new Set(partIds), done)
       if (!changedBooks.length) return Promise.resolve()
-      return run({ put: [...changedBooks.map((w) => put('workbooks', w)), ...changedTodos.map((t) => put('todos', t))] })
+      return run({
+        put: [...changedBooks.map((w) => put('workbooks', w)), ...changedTodos.map((t) => put('todos', t)), ...stepSyncPuts(get().projects, changedTodos)],
+      })
     },
     /** 외부 연결(할 일·계획·기록)은 참조 ID 그대로 보존 (Q81) */
     removeWorkbook(id: string) {
@@ -265,11 +273,15 @@ export function createActions(store: Store, get: () => AppData, refresh: () => P
     },
 
     // ───── 휴지통 ─────
+    /** 수행평가 복원 시 함께 삭제된 할 일·하위 항목과 연결도 복원 (Q135) */
     restore(collection: string, id: string) {
-      return run({ restore: [{ c: collection as Collection, id }] })
+      const linked = collection === 'projects' ? get().trash.filter((t) => t.groupedUnder === id) : []
+      return run({ restore: [{ c: collection as Collection, id }, ...linked.map((t) => ({ c: 'todos' as const, id: t.id }))] })
     },
+    /** 영구 삭제. 수행평가와 함께 삭제된 할 일도 함께 영구 삭제 */
     purge(collection: string, id: string) {
-      return run({ purge: [{ c: collection as Collection, id }] })
+      const linked = collection === 'projects' ? get().trash.filter((t) => t.groupedUnder === id) : []
+      return run({ purge: [{ c: collection as Collection, id }, ...linked.map((t) => ({ c: 'todos' as const, id: t.id }))] })
     },
   }
 }
