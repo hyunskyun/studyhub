@@ -13,6 +13,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // 등록은 src/main.tsx 에서 직접 (Android 앱에서는 등록하지 않음)
+      injectRegister: null,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: '학업 플래너',

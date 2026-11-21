@@ -1,4 +1,5 @@
 import type { Batch, StateResponse } from '../domain/collections'
+import { apiBase } from '../platform'
 
 /** 데이터 저장소 계약: 서버(D1 API) 또는 개발용 메모리 저장소 */
 export interface Store {
@@ -22,7 +23,7 @@ export function createApiStore(accessKey: string): Store {
   async function call(path: string, init?: RequestInit) {
     let res: Response
     try {
-      res = await fetch(path, {
+      res = await fetch(`${apiBase()}${path}`, {
         ...init,
         headers: { ...init?.headers, authorization: `Bearer ${accessKey}`, 'content-type': 'application/json' },
       })

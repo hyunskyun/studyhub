@@ -127,27 +127,54 @@ async function applyBatch(env: Env, batch: Batch): Promise<Response> {
   return json({ ok: true })
 }
 
+// Android 앱(Capacitor) 안의 화면 출처. 이 출처만 교차 출처 요청을 허용한다 (접근 키는 여전히 필요).
+const APP_ORIGINS = new Set(['https://localhost'])
+
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get('origin')
+  if (!origin || !APP_ORIGINS.has(origin)) return {}
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-headers': 'authorization, content-type',
+    'access-control-max-age': '86400',
+    vary: 'Origin',
+  }
+}
+
+function withCors(res: Response, request: Request): Response {
+  const extra = corsHeaders(request)
+  if (!Object.keys(extra).length) return res
+  const out = new Response(res.body, res)
+  for (const [k, v] of Object.entries(extra)) out.headers.set(k, v)
+  return out
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url)
     if (!url.pathname.startsWith('/api/')) return new Response(null, { status: 404 })
-
-    const denied = await authorize(request, env)
-    if (denied) return denied
-
-    try {
-      if (url.pathname === '/api/state' && request.method === 'GET') return json(await getState(env))
-      if (url.pathname === '/api/batch' && request.method === 'POST') {
-        const text = await request.text()
-        if (text.length > 2_000_000) return error(413, '요청이 너무 큽니다.')
-        const parsed = parseBatch(JSON.parse(text))
-        if (typeof parsed === 'string') return error(400, parsed)
-        return await applyBatch(env, parsed)
-      }
-      return error(404, '없는 API입니다.')
-    } catch (e) {
-      console.error(e)
-      return error(500, '서버 오류가 발생했습니다.')
-    }
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(request) })
+    return withCors(await handleApi(request, env, url), request)
   },
 } satisfies ExportedHandler<Env>
+
+async function handleApi(request: Request, env: Env, url: URL): Promise<Response> {
+  const denied = await authorize(request, env)
+  if (denied) return denied
+
+  try {
+    if (url.pathname === '/api/state' && request.method === 'GET') return json(await getState(env))
+    if (url.pathname === '/api/batch' && request.method === 'POST') {
+      const text = await request.text()
+      if (text.length > 2_000_000) return error(413, '요청이 너무 큽니다.')
+      const parsed = parseBatch(JSON.parse(text))
+      if (typeof parsed === 'string') return error(400, parsed)
+      return await applyBatch(env, parsed)
+    }
+    return error(404, '없는 API입니다.')
+  } catch (e) {
+    console.error(e)
+    return error(500, '서버 오류가 발생했습니다.')
+  }
+}

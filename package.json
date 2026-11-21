@@ -10,9 +10,13 @@
     "preview": "vite preview",
     "test": "node --test tests/",
     "db:migrate:local": "wrangler d1 migrations apply studyhub --local",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "cd android && gradlew.bat assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
     "@tailwindcss/vite": "^4.3.5",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
@@ -23,6 +27,7 @@
     "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@cloudflare/vite-plugin": "^1.70.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",

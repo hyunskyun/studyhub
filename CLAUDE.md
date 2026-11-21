@@ -14,6 +14,7 @@
 - 모든 API는 개인 접근 키(`ACCESS_KEY` 비밀값)로 보호한다. 키를 코드·Git·로그에 넣지 않는다. 로컬은 `.dev.vars`(Git 제외).
 - 스키마 변경은 `migrations/`에 새 SQL 파일로 추가하고 `npm run db:migrate:local`로 적용. 바인딩을 바꾸면 `npm run cf-typegen`.
 - 원격 D1 생성·마이그레이션·배포(`wrangler deploy`, `secret put`)는 사용자가 요청할 때만 한다.
+- Android APK: `npm run android:sync` 후 `npm run android:apk` (JAVA_HOME은 Android Studio `jbr`). 플랫폼 차이는 `src/platform/`에서만 처리한다. API 주소는 `apiBase()`를 거친다.
 
 ## 원칙
 - iPad 가로·세로 화면과 터치 조작에 최적화한다 (버튼·입력·체크 영역 36px 이상, 사이드바 항목은 사용자 요청으로 32px, 안전 영역 `env(safe-area-inset-*)` 반영, hover 의존 금지). 스마트폰 폭은 하단 탭, md(768px) 이상은 사이드바.
