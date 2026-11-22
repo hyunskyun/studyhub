@@ -15,7 +15,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // 등록은 src/main.tsx 에서 직접 (Android 앱에서는 등록하지 않음)
       injectRegister: null,
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: '학업 플래너',
         short_name: '학업 플래너',
@@ -25,13 +25,13 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#eef1f5',
+        background_color: '#F8F5EB',
         theme_color: '#eef1f5',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
